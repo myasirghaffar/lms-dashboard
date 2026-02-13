@@ -41,18 +41,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const login = async (email: string, password: string, role: UserRole) => {
         setIsLoading(true);
 
-        // Simulate API call - Replace with actual authentication
+        const { getUsers } = await import('@/lib/api');
+        const users = getUsers();
+        const foundUser = users.find(u => u.email === email && u.role === role);
+
         await new Promise(resolve => setTimeout(resolve, 500));
 
-        const mockUser: User = {
-            id: '1',
-            email,
-            name: email.split('@')[0],
-            role,
-        };
-
-        setUser(mockUser);
-        localStorage.setItem('user', JSON.stringify(mockUser));
+        if (foundUser) {
+            const user: User = {
+                id: foundUser.id,
+                email: foundUser.email,
+                name: foundUser.name || email.split('@')[0],
+                role: foundUser.role as UserRole, // explicit cast to match generic UserRole
+            };
+            setUser(user);
+            localStorage.setItem('user', JSON.stringify(user));
+        } else {
+            // Fallback for testing if user not in json
+            const mockUser: User = {
+                id: '1',
+                email,
+                name: email.split('@')[0],
+                role,
+            };
+            setUser(mockUser);
+            localStorage.setItem('user', JSON.stringify(mockUser));
+        }
         setIsLoading(false);
     };
 

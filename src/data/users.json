@@ -1,0 +1,57 @@
+[
+    {
+        "id": "user_1",
+        "email": "admin@example.com",
+        "name": "Super Admin",
+        "role": "SUPER_ADMIN",
+        "phoneNumber": "1234567890",
+        "address": "123 Main St",
+        "profileImage": "https://i.pravatar.cc/150?u=user_1",
+        "createdAt": "2023-01-01T00:00:00.000Z",
+        "updatedAt": "2023-01-01T00:00:00.000Z"
+    },
+    {
+        "id": "user_branch_admin",
+        "email": "principal@school.com",
+        "name": "Principal Skinner",
+        "role": "BRANCH_ADMIN",
+        "phoneNumber": "555-1234",
+        "address": "Springfield Elementary",
+        "profileImage": "https://i.pravatar.cc/150?u=user_branch",
+        "createdAt": "2023-01-01T00:00:00.000Z",
+        "updatedAt": "2023-01-01T00:00:00.000Z"
+    },
+    {
+        "id": "user_2",
+        "email": "teacher1@example.com",
+        "name": "John Teacher",
+        "role": "TEACHER",
+        "phoneNumber": "0987654321",
+        "address": "456 Oak Ave",
+        "profileImage": "https://i.pravatar.cc/150?u=user_2",
+        "createdAt": "2023-01-02T00:00:00.000Z",
+        "updatedAt": "2023-01-02T00:00:00.000Z"
+    },
+    {
+        "id": "user_3",
+        "email": "student1@example.com",
+        "name": "Alice Student",
+        "role": "STUDENT",
+        "phoneNumber": "1122334455",
+        "address": "789 Pine Ln",
+        "profileImage": "https://i.pravatar.cc/150?u=user_3",
+        "createdAt": "2023-01-03T00:00:00.000Z",
+        "updatedAt": "2023-01-03T00:00:00.000Z"
+    },
+    {
+        "id": "user_4",
+        "email": "parent1@example.com",
+        "name": "Bob Parent",
+        "role": "PARENT",
+        "phoneNumber": "5566778899",
+        "address": "789 Pine Ln",
+        "profileImage": "https://i.pravatar.cc/150?u=user_4",
+        "createdAt": "2023-01-03T00:00:00.000Z",
+        "updatedAt": "2023-01-03T00:00:00.000Z"
+    }
+]

@@ -1,0 +1,9 @@
+[
+    {
+        "id": "exam_1",
+        "name": "Mid-Term Exam",
+        "date": "2023-11-15T09:00:00.000Z",
+        "subjectId": "subject_1",
+        "weightage": 30
+    }
+]

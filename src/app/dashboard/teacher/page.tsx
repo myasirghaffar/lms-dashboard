@@ -1,20 +1,47 @@
+'use client';
+
 import React from 'react';
 import { BookOpen, ClipboardCheck, FileText, Users, Calendar, TrendingUp } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { getClasses, getTeachers, getStudents, getSubjects, getAssignments } from '@/lib/api';
 
 export default function TeacherDashboard() {
-    const stats = [
-        { title: 'My Classes', value: '5', icon: BookOpen, color: 'bg-blue-500' },
-        { title: 'Total Students', value: '156', icon: Users, color: 'bg-green-500' },
-        { title: 'Pending Assignments', value: '12', icon: FileText, color: 'bg-yellow-500' },
-        { title: 'Attendance Today', value: '92%', icon: ClipboardCheck, color: 'bg-purple-500' },
-    ];
+    const { user } = useAuth();
 
-    const myClasses = [
-        { name: 'Grade 10 - Section A', subject: 'Mathematics', students: 32, nextClass: 'Today, 10:00 AM' },
-        { name: 'Grade 10 - Section B', subject: 'Mathematics', students: 30, nextClass: 'Today, 2:00 PM' },
-        { name: 'Grade 9 - Section A', subject: 'Mathematics', students: 28, nextClass: 'Tomorrow, 9:00 AM' },
-        { name: 'Grade 9 - Section B', subject: 'Mathematics', students: 31, nextClass: 'Tomorrow, 11:00 AM' },
-        { name: 'Grade 8 - Section A', subject: 'Mathematics', students: 35, nextClass: 'Tomorrow, 3:00 PM' },
+    // Data Loading
+    const teachers = getTeachers();
+    const classes = getClasses();
+    const students = getStudents();
+    const subjects = getSubjects();
+    const assignments = getAssignments();
+
+    // Current Teacher context
+    const currentTeacher = teachers.find(t => t.userId === user?.id);
+
+    const teacherClasses = currentTeacher
+        ? classes.filter(c => c.teacherId === currentTeacher.id)
+        : [];
+
+    const myClasses = teacherClasses.map(cls => {
+        const classStudents = students.filter(s => s.classId === cls.id);
+        const classSubject = subjects.find(s => s.classId === cls.id && s.teacherId === currentTeacher?.id);
+
+        return {
+            name: cls.name,
+            subject: classSubject?.name || 'General',
+            students: classStudents.length,
+            nextClass: 'Today, 10:00 AM' // Mock
+        };
+    });
+
+    const totalStudents = myClasses.reduce((acc, curr) => acc + curr.students, 0);
+    const myAssignments = assignments.filter(a => a.teacherId === currentTeacher?.id);
+
+    const stats = [
+        { title: 'My Classes', value: teacherClasses.length.toString(), icon: BookOpen, color: 'bg-blue-500' },
+        { title: 'Total Students', value: totalStudents.toString(), icon: Users, color: 'bg-green-500' },
+        { title: 'Pending Assignments', value: myAssignments.length.toString(), icon: FileText, color: 'bg-yellow-500' },
+        { title: 'Attendance Today', value: '98%', icon: ClipboardCheck, color: 'bg-purple-500' },
     ];
 
     const pendingTasks = [
@@ -29,7 +56,9 @@ export default function TeacherDashboard() {
             {/* Page Header */}
             <div>
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Teacher Dashboard</h1>
-                <p className="text-gray-600 dark:text-gray-400 mt-1">Welcome back, Mr. Johnson!</p>
+                <p className="text-gray-600 dark:text-gray-400 mt-1">
+                    Welcome back, {user?.name || 'Teacher'}!
+                </p>
             </div>
 
             {/* Stats Grid */}
@@ -72,6 +101,9 @@ export default function TeacherDashboard() {
                                 </div>
                             </div>
                         ))}
+                        {myClasses.length === 0 && (
+                            <div className="text-center py-4 text-gray-500">No classes assigned yet.</div>
+                        )}
                     </div>
                 </div>
 
@@ -84,8 +116,8 @@ export default function TeacherDashboard() {
                     <div className="space-y-3">
                         {pendingTasks.map((item, index) => (
                             <div key={index} className={`p-3 rounded-lg ${item.priority === 'high' ? 'bg-red-50 dark:bg-red-900/20' :
-                                    item.priority === 'medium' ? 'bg-yellow-50 dark:bg-yellow-900/20' :
-                                        'bg-green-50 dark:bg-green-900/20'
+                                item.priority === 'medium' ? 'bg-yellow-50 dark:bg-yellow-900/20' :
+                                    'bg-green-50 dark:bg-green-900/20'
                                 }`}>
                                 <div className="flex items-start justify-between">
                                     <div className="flex-1">
@@ -93,8 +125,8 @@ export default function TeacherDashboard() {
                                         <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Due: {item.dueDate}</p>
                                     </div>
                                     <span className={`text-xs px-2 py-1 rounded ${item.priority === 'high' ? 'bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-200' :
-                                            item.priority === 'medium' ? 'bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200' :
-                                                'bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200'
+                                        item.priority === 'medium' ? 'bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200' :
+                                            'bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200'
                                         }`}>
                                         {item.priority}
                                     </span>
@@ -118,6 +150,9 @@ export default function TeacherDashboard() {
                             <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Avg. Score</p>
                         </div>
                     ))}
+                    {myClasses.length === 0 && (
+                        <div className="col-span-5 text-center py-4 text-gray-500">No performance data available.</div>
+                    )}
                 </div>
             </div>
 

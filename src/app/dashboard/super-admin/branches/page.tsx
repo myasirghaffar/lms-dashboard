@@ -4,39 +4,23 @@ import React from 'react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Building2, MapPin, Phone, Users, MoreHorizontal } from 'lucide-react';
 
+import { getBranches, getStudents, getTeachers } from '@/lib/api';
+
 export default function BranchesPage() {
-    const branches = [
-        {
-            id: 1,
-            name: 'Main Campus',
-            location: 'Downtown District',
-            contact: '+1 234 567 8900',
-            principal: 'Dr. Robert Smith',
-            students: 1200,
-            teachers: 85,
-            status: 'Active',
-        },
-        {
-            id: 2,
-            name: 'North Branch',
-            location: 'North District',
-            contact: '+1 234 567 8901',
-            principal: 'Mrs. Sarah Johnson',
-            students: 800,
-            teachers: 60,
-            status: 'Active',
-        },
-        {
-            id: 3,
-            name: 'South Branch',
-            location: 'South District',
-            contact: '+1 234 567 8902',
-            principal: 'Mr. James Wilson',
-            students: 950,
-            teachers: 72,
-            status: 'Active',
-        },
-    ];
+    const branchesData = getBranches();
+    const studentsData = getStudents();
+    const teachersData = getTeachers();
+
+    const branches = branchesData.map(branch => ({
+        id: branch.id,
+        name: branch.name,
+        location: branch.address || 'No Address',
+        contact: branch.phoneNumber || 'No Contact',
+        principal: 'Principal Name',
+        students: studentsData.filter(s => s.branchId === branch.id).length,
+        teachers: teachersData.filter(t => t.branchId === branch.id).length,
+        status: 'Active'
+    }));
 
     return (
         <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>

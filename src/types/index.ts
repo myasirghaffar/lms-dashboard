@@ -1,6 +1,4 @@
-import { UserRole } from '@prisma/client';
-
-export type { UserRole };
+export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'BRANCH_ADMIN' | 'TEACHER' | 'STUDENT' | 'PARENT';
 
 export interface User {
     id: string;
@@ -29,6 +27,7 @@ export interface Student {
     userId: string;
     parentId: string | null;
     branchId: string;
+    classId: string;
     rollNumber: string;
     user?: User;
     branch?: Branch;

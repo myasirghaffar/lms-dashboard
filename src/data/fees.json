@@ -1,0 +1,12 @@
+[
+    {
+        "id": "fee_1",
+        "studentId": "student_1",
+        "title": "Tuition Fee - Fall 2023",
+        "amount": 5000,
+        "paid": 5000,
+        "status": "PAID",
+        "dueDate": "2023-09-01T00:00:00.000Z",
+        "updatedAt": "2023-09-05T10:00:00.000Z"
+    }
+]

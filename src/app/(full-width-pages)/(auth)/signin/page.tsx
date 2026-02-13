@@ -161,7 +161,12 @@ export default function SignInPage() {
         <div className="mt-6 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
           <p className="font-semibold text-gray-900 dark:text-white mb-2 text-sm">Demo Credentials:</p>
           <div className="text-xs text-gray-700 dark:text-gray-300 space-y-1">
-            <p>Any email/password works - just select your role!</p>
+            <p><strong>Super Admin:</strong> admin@example.com</p>
+            <p><strong>Branch Admin:</strong> principal@school.com</p>
+            <p><strong>Teacher:</strong> teacher1@example.com</p>
+            <p><strong>Student:</strong> student1@example.com</p>
+            <p><strong>Parent:</strong> parent1@example.com</p>
+            <p className="mt-2 text-gray-500 italic">Password: any</p>
           </div>
         </div>
       </div>

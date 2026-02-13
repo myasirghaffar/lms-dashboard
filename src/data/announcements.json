@@ -1,0 +1,10 @@
+[
+    {
+        "id": "ann_1",
+        "title": "Welcome to the new semester!",
+        "content": "We are excited to start the new academic year.",
+        "branchId": "branch_1",
+        "target": "ALL",
+        "createdAt": "2023-08-25T09:00:00.000Z"
+    }
+]

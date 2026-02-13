@@ -1,20 +1,49 @@
+'use client';
+
 import React from 'react';
 import { Users, GraduationCap, Heart, Bell, TrendingUp, Calendar } from 'lucide-react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { useAuth } from '@/context/AuthContext';
+import { getStudents, getAttendance, getMarks, getUsers, getClasses } from '@/lib/api';
 
 function ParentDashboardContent() {
-    // Sample data for multiple children
-    const children = [
-        {
-            id: '1',
-            name: 'Sarah Johnson',
-            class: 'Grade 10-A',
-            rollNumber: 'STU-2024-001',
-            attendance: 94,
-            avgScore: 87,
-            upcomingExams: 2,
-        },
-    ];
+    const { user } = useAuth();
+
+    // Data Loading
+    const allStudents = getStudents();
+    const allAttendance = getAttendance();
+    const allMarks = getMarks();
+    const allUsers = getUsers();
+    const allClasses = getClasses();
+
+    // Derive children data
+    const children = allStudents
+        .filter(s => s.parentId === user?.id)
+        .map(child => {
+            const childUser = allUsers.find(u => u.id === child.userId);
+            const att = allAttendance.filter(a => a.studentId === child.id);
+            const marks = allMarks.filter(m => m.studentId === child.id);
+            const cls = allClasses.find(c => c.id === child.classId);
+
+            // Calculate stats
+            const attendancePct = att.length > 0
+                ? Math.round((att.filter(a => a.status === 'PRESENT').length / att.length) * 100)
+                : 95; // Default dummy value if no records
+
+            const avgScore = marks.length > 0
+                ? Math.round(marks.reduce((acc, m) => acc + m.score, 0) / marks.length)
+                : 85; // Default dummy value
+
+            return {
+                id: child.id,
+                name: childUser?.name || 'Unknown Child',
+                class: cls?.name || 'Grade 10-A',
+                rollNumber: child.rollNumber,
+                attendance: attendancePct,
+                avgScore: avgScore,
+                upcomingExams: 2,
+            };
+        });
 
     const recentUpdates = [
         { title: 'Mid-term exam results published', date: 'Today', type: 'academic' },
@@ -28,39 +57,49 @@ function ParentDashboardContent() {
             {/* Page Header */}
             <div>
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Parent Dashboard</h1>
-                <p className="text-gray-600 dark:text-gray-400 mt-1">Monitor your child's academic progress</p>
+                <p className="text-gray-600 dark:text-gray-400 mt-1">Monitor your child&apos;s academic progress</p>
             </div>
 
             {/* Children Overview */}
-            {children.map((child) => (
-                <div key={child.id} className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-700 rounded-xl shadow-md p-6">
-                    <div className="flex items-center justify-between mb-6">
-                        <div>
-                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{child.name}</h2>
-                            <p className="text-gray-600 dark:text-gray-400">{child.class} • Roll No: {child.rollNumber}</p>
+            {children.length > 0 ? (
+                children.map((child) => (
+                    <div key={child.id} className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-700 rounded-xl shadow-md p-6">
+                        <div className="flex items-center justify-between mb-6">
+                            <div>
+                                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{child.name}</h2>
+                                <p className="text-gray-600 dark:text-gray-400">{child.class} • Roll No: {child.rollNumber}</p>
+                            </div>
+                            <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center">
+                                <GraduationCap className="h-8 w-8 text-white" />
+                            </div>
                         </div>
-                        <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center">
-                            <GraduationCap className="h-8 w-8 text-white" />
-                        </div>
-                    </div>
 
-                    {/* Quick Stats */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
-                            <p className="text-sm text-gray-600 dark:text-gray-400">Attendance</p>
-                            <p className="text-2xl font-bold text-green-600 dark:text-green-400">{child.attendance}%</p>
-                        </div>
-                        <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
-                            <p className="text-sm text-gray-600 dark:text-gray-400">Average Score</p>
-                            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{child.avgScore}%</p>
-                        </div>
-                        <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
-                            <p className="text-sm text-gray-600 dark:text-gray-400">Upcoming Exams</p>
-                            <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{child.upcomingExams}</p>
+                        {/* Quick Stats */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
+                                <p className="text-sm text-gray-600 dark:text-gray-400">Attendance</p>
+                                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{child.attendance}%</p>
+                            </div>
+                            <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
+                                <p className="text-sm text-gray-600 dark:text-gray-400">Average Score</p>
+                                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{child.avgScore}%</p>
+                            </div>
+                            <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
+                                <p className="text-sm text-gray-600 dark:text-gray-400">Upcoming Exams</p>
+                                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{child.upcomingExams}</p>
+                            </div>
                         </div>
                     </div>
+                ))
+            ) : (
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 p-6 rounded-xl border border-yellow-200 dark:border-yellow-800">
+                    <p className="text-yellow-800 dark:text-yellow-200 text-center">
+                        No children linked to your account. Please contact administration.
+                        <br />
+                        <span className="text-sm opacity-75">(Try logging in as parent1@example.com for values)</span>
+                    </p>
                 </div>
-            ))}
+            )}
 
             {/* Main Content Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -73,8 +112,8 @@ function ParentDashboardContent() {
                     <div className="space-y-4">
                         {recentUpdates.map((update, index) => (
                             <div key={index} className={`p-3 rounded-lg ${update.type === 'academic' ? 'bg-blue-50 dark:bg-blue-900/20' :
-                                    update.type === 'event' ? 'bg-purple-50 dark:bg-purple-900/20' :
-                                        'bg-yellow-50 dark:bg-yellow-900/20'
+                                update.type === 'event' ? 'bg-purple-50 dark:bg-purple-900/20' :
+                                    'bg-yellow-50 dark:bg-yellow-900/20'
                                 }`}>
                                 <p className="text-sm font-medium text-gray-900 dark:text-white">{update.title}</p>
                                 <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{update.date}</p>

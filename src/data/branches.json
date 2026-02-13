@@ -1,0 +1,20 @@
+[
+    {
+        "id": "branch_1",
+        "name": "Main Branch",
+        "address": "123 Education Blvd",
+        "phoneNumber": "111-222-3333",
+        "email": "main@school.com",
+        "createdAt": "2023-01-01T00:00:00.000Z",
+        "updatedAt": "2023-01-01T00:00:00.000Z"
+    },
+    {
+        "id": "branch_2",
+        "name": "Downtown Branch",
+        "address": "456 City Center",
+        "phoneNumber": "444-555-6666",
+        "email": "downtown@school.com",
+        "createdAt": "2023-01-01T00:00:00.000Z",
+        "updatedAt": "2023-01-01T00:00:00.000Z"
+    }
+]

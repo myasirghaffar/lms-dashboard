@@ -1,0 +1,9 @@
+[
+    {
+        "id": "mark_1",
+        "studentId": "student_1",
+        "examId": "exam_1",
+        "score": 85,
+        "remarks": "Great job!"
+    }
+]

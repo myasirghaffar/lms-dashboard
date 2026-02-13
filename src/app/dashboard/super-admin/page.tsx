@@ -2,20 +2,25 @@ import React from 'react';
 import { Building2, Users, GraduationCap, TrendingUp, DollarSign, Calendar } from 'lucide-react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
+import { getDashboardStats, getBranches, getFees } from '@/lib/api';
+
 function SuperAdminDashboardContent() {
+    const dashboardStats = getDashboardStats();
+    const branchesData = getBranches();
+    const feesData = getFees();
+
     const stats = [
-        { title: 'Total Branches', value: '12', icon: Building2, color: 'bg-blue-500' },
-        { title: 'Total Students', value: '3,450', icon: GraduationCap, color: 'bg-green-500' },
-        { title: 'Total Teachers', value: '245', icon: Users, color: 'bg-purple-500' },
-        { title: 'Revenue (Monthly)', value: '$125,000', icon: DollarSign, color: 'bg-yellow-500' },
+        { title: 'Total Branches', value: dashboardStats.totalBranches?.toString() || '0', icon: Building2, color: 'bg-blue-500' },
+        { title: 'Total Students', value: dashboardStats.totalStudents?.toString() || '0', icon: GraduationCap, color: 'bg-green-500' },
+        { title: 'Total Teachers', value: dashboardStats.totalTeachers?.toString() || '0', icon: Users, color: 'bg-purple-500' },
+        { title: 'Revenue (Monthly)', value: `$${feesData.reduce((acc, fee) => acc + fee.paid, 0)}`, icon: DollarSign, color: 'bg-yellow-500' },
     ];
 
-    const branches = [
-        { name: 'Main Campus', students: 850, attendance: 90 },
-        { name: 'North Branch', students: 720, attendance: 92 },
-        { name: 'South Branch', students: 680, attendance: 94 },
-        { name: 'East Branch', students: 600, attendance: 96 },
-    ];
+    const branches = branchesData.map(b => ({
+        name: b.name,
+        students: 0, // In a real app we'd filter students by branch here, for now dummy 0 or implement getStudentsByBranch
+        attendance: 95 // Hardcoded for now as per "dummy data" request if not available
+    }));
 
     return (
         <div className="space-y-6">

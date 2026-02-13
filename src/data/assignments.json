@@ -1,0 +1,11 @@
+[
+    {
+        "id": "assign_1",
+        "title": "Algebra Homework 1",
+        "description": "Complete exercises 1-10 on page 42.",
+        "dueDate": "2023-10-10T23:59:59.000Z",
+        "subjectId": "subject_1",
+        "teacherId": "teacher_1",
+        "fileUrl": "https://example.com/homework1.pdf"
+    }
+]

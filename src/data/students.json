@@ -1,0 +1,10 @@
+[
+    {
+        "id": "student_1",
+        "userId": "user_3",
+        "parentId": "user_4",
+        "branchId": "branch_1",
+        "classId": "class_1",
+        "rollNumber": "ST-001"
+    }
+]
