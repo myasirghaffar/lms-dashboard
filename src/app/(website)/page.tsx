@@ -22,13 +22,13 @@ export default function LandingPage() {
             <NearbySection />
             <InfoGrid />
             <ExcellenceSection />
-            <NewsSection />
             <BooksSection />
             <FeaturesSection />
             <StatsSection />
             <ActionGrid />
             <JoinSection />
             <LogosSection />
+            <NewsSection />
         </>
     );
 }

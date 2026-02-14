@@ -4,13 +4,32 @@ import React, { useState } from 'react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Users, Search, Filter, MoreHorizontal, GraduationCap, Eye, Edit, Trash2 } from 'lucide-react';
 import { getStudents, getUsers, getClasses } from '@/lib/api';
+import StudentModal from '@/components/dashboard/students/StudentModal';
+import Image from 'next/image';
 
 export default function StudentsPage() {
+    const [modalState, setModalState] = useState<{
+        isOpen: boolean;
+        mode: 'add' | 'edit' | 'view';
+        selectedData: any | null;
+    }>({
+        isOpen: false,
+        mode: 'add',
+        selectedData: null,
+    });
     const [searchTerm, setSearchTerm] = useState('');
 
     const students = getStudents();
     const users = getUsers();
     const classes = getClasses();
+
+    const handleOpenModal = (mode: 'add' | 'edit' | 'view', data: any = null) => {
+        setModalState({
+            isOpen: true,
+            mode,
+            selectedData: data,
+        });
+    };
 
     const studentList = students.map(student => {
         const user = users.find(u => u.id === student.userId);
@@ -39,11 +58,21 @@ export default function StudentsPage() {
                         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Students</h1>
                         <p className="text-gray-600 dark:text-gray-400 mt-1">Manage student enrollment and records</p>
                     </div>
-                    <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
+                    <button
+                        onClick={() => handleOpenModal('add')}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
+                    >
                         <GraduationCap className="w-4 h-4" />
                         Add Student
                     </button>
                 </div>
+
+                <StudentModal
+                    isOpen={modalState.isOpen}
+                    onClose={() => setModalState(prev => ({ ...prev, isOpen: false }))}
+                    mode={modalState.mode}
+                    initialData={modalState.selectedData}
+                />
 
                 <div className="flex flex-col sm:flex-row gap-4">
                     <div className="relative flex-1">
@@ -79,10 +108,11 @@ export default function StudentsPage() {
                                     <tr key={student.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center">
-                                                <div className="h-10 w-10 rounded-full overflow-hidden bg-gray-200">
-                                                    <img
+                                                <div className="relative h-10 w-10 rounded-full overflow-hidden bg-gray-200">
+                                                    <Image
                                                         src={student.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name)}`}
-                                                        alt=""
+                                                        alt={student.name}
+                                                        fill
                                                         className="h-full w-full object-cover"
                                                     />
                                                 </div>
@@ -105,10 +135,16 @@ export default function StudentsPage() {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <div className="flex items-center justify-end gap-2">
-                                                <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-blue-600 transition">
+                                                <button
+                                                    onClick={() => handleOpenModal('view', student)}
+                                                    className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-blue-600 transition"
+                                                >
                                                     <Eye className="w-4 h-4" />
                                                 </button>
-                                                <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-yellow-600 transition">
+                                                <button
+                                                    onClick={() => handleOpenModal('edit', student)}
+                                                    className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-yellow-600 transition"
+                                                >
                                                     <Edit className="w-4 h-4" />
                                                 </button>
                                                 <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-red-600 transition">

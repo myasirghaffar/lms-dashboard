@@ -115,13 +115,13 @@ const HeroSection = () => {
             {/* Navigation Arrows */}
             <button
                 onClick={prevSlide}
-                className="absolute left-6 top-1/2 -translate-y-1/2 z-20 bg-black/30 hover:bg-[#92257B] text-white p-3 rounded-full backdrop-blur-sm transition-all group"
+                className="absolute left-6 top-1/2 -translate-y-1/2 z-20 bg-black/30 hover:bg-[#92257B] text-white p-3 rounded-full backdrop-blur-sm transition-all group hidden md:block"
             >
                 <ChevronLeft size={28} className="group-hover:-translate-x-1 transition-transform" />
             </button>
             <button
                 onClick={nextSlide}
-                className="absolute right-6 top-1/2 -translate-y-1/2 z-20 bg-black/30 hover:bg-[#92257B] text-white p-3 rounded-full backdrop-blur-sm transition-all group"
+                className="absolute right-6 top-1/2 -translate-y-1/2 z-20 bg-black/30 hover:bg-[#92257B] text-white p-3 rounded-full backdrop-blur-sm transition-all group hidden md:block"
             >
                 <ChevronRight size={28} className="group-hover:translate-x-1 transition-transform" />
             </button>

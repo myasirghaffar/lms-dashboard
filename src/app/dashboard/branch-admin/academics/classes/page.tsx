@@ -4,8 +4,10 @@ import React, { useState } from 'react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Users, Search, Filter, BookOpen, Clock, MoreHorizontal } from 'lucide-react';
 import { getClasses, getTeachers, getStudents, getUsers } from '@/lib/api';
+import ClassModal from '@/components/dashboard/academics/ClassModal';
 
 export default function ClassesPage() {
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
 
     // Data Loading
@@ -38,11 +40,16 @@ export default function ClassesPage() {
                         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Classes</h1>
                         <p className="text-gray-600 dark:text-gray-400 mt-1">Manage academic classes and sections</p>
                     </div>
-                    <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
+                    >
                         <BookOpen className="w-4 h-4" />
                         Add Class
                     </button>
                 </div>
+
+                <ClassModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
                 <div className="flex flex-col sm:flex-row gap-4">
                     <div className="relative flex-1">

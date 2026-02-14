@@ -3,10 +3,14 @@
 import React from 'react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Building2, MapPin, Phone, Users, MoreHorizontal } from 'lucide-react';
-
 import { getBranches, getStudents, getTeachers } from '@/lib/api';
+import AddBranchModal from '@/components/dashboard/branches/AddBranchModal';
+import ConfirmModal from '@/components/ui/modal/ConfirmModal';
 
 export default function BranchesPage() {
+    const [isModalOpen, setIsModalOpen] = React.useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
+    const [branchToDelete, setBranchToDelete] = React.useState<string | null>(null);
     const branchesData = getBranches();
     const studentsData = getStudents();
     const teachersData = getTeachers();
@@ -30,11 +34,27 @@ export default function BranchesPage() {
                         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Branches Management</h1>
                         <p className="text-gray-600 dark:text-gray-400 mt-1">Manage all school branches and campuses</p>
                     </div>
-                    <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
+                    >
                         <Building2 className="w-4 h-4" />
                         Add Branch
                     </button>
                 </div>
+
+                <AddBranchModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+
+                <ConfirmModal
+                    isOpen={isDeleteModalOpen}
+                    onClose={() => setIsDeleteModalOpen(false)}
+                    onConfirm={() => {
+                        console.log('Deleting branch:', branchToDelete);
+                        // Add deletion logic here
+                    }}
+                    title="Delete Branch"
+                    message="Are you sure you want to delete this branch? This action cannot be undone and will affect all students and teachers assigned to it."
+                />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {branches.map((branch) => (

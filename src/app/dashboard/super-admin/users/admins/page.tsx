@@ -4,8 +4,11 @@ import React from 'react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Users, Mail, Phone, MapPin, MoreHorizontal, Shield } from 'lucide-react';
 import { getUsers } from '@/lib/api';
+import UserModal from '@/components/dashboard/users/UserModal';
+import Image from 'next/image';
 
 export default function AdminsPage() {
+    const [isModalOpen, setIsModalOpen] = React.useState(false);
     const allUsers = getUsers();
     const admins = allUsers.filter(u => u.role === 'ADMIN' || u.role === 'SUPER_ADMIN');
 
@@ -17,22 +20,30 @@ export default function AdminsPage() {
                         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Management</h1>
                         <p className="text-gray-600 dark:text-gray-400 mt-1">Manage system administrators and branch admins</p>
                     </div>
-                    <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
+                    >
                         <Users className="w-4 h-4" />
                         Add Admin
                     </button>
                 </div>
+
+                <UserModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} roleType="ADMIN" />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {admins.map((admin) => (
                         <div key={admin.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
                             <div className="flex justify-between items-start mb-4">
                                 <div className="flex items-center space-x-3">
-                                    <img
-                                        src={admin.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(admin.name || 'Admin')}`}
-                                        alt={admin.name || 'Admin'}
-                                        className="w-12 h-12 rounded-full object-cover"
-                                    />
+                                    <div className="relative w-12 h-12">
+                                        <Image
+                                            src={admin.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(admin.name || 'Admin')}`}
+                                            alt={admin.name || 'Admin'}
+                                            fill
+                                            className="rounded-full object-cover"
+                                        />
+                                    </div>
                                     <div>
                                         <h3 className="font-bold text-gray-900 dark:text-white">{admin.name}</h3>
                                         <div className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-full w-fit mt-1">

@@ -4,8 +4,10 @@ import React, { useState } from 'react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Book, Search, Filter, Layers, User, MoreHorizontal } from 'lucide-react';
 import { getSubjects, getClasses, getTeachers, getUsers } from '@/lib/api';
+import SubjectModal from '@/components/dashboard/academics/SubjectModal';
 
 export default function SubjectsPage() {
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
 
     // Data Loading
@@ -38,11 +40,16 @@ export default function SubjectsPage() {
                         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Subjects</h1>
                         <p className="text-gray-600 dark:text-gray-400 mt-1">Manage subjects and course materials</p>
                     </div>
-                    <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
+                    >
                         <Book className="w-4 h-4" />
                         Add Subject
                     </button>
                 </div>
+
+                <SubjectModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
                 <div className="flex flex-col sm:flex-row gap-4">
                     <div className="relative flex-1">
