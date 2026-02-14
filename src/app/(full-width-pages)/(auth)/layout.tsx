@@ -29,9 +29,41 @@ export default function AuthLayout({
                     alt="Logo"
                   />
                 </Link>
-                <p className="text-center text-gray-400 dark:text-white/60">
-                  Free and Open-Source Tailwind CSS Admin Dashboard Template
+                <p className="text-center text-gray-400 dark:text-white/60 mb-6 font-semibold">
+                  AMS Talwandi Schools Management System
                 </p>
+
+                {/* Demo Credentials Box */}
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20 text-white w-full shadow-2xl">
+                  <p className="font-bold mb-4 text-center border-b border-white/10 pb-2 uppercase tracking-wider text-[#92257B]">Demo Credentials</p>
+                  <div className="space-y-3 text-sm">
+                    <div className="flex justify-between border-b border-white/5 pb-1">
+                      <span className="text-gray-400">Super Admin</span>
+                      <span className="font-medium">admin@example.com</span>
+                    </div>
+                    <div className="flex justify-between border-b border-white/5 pb-1">
+                      <span className="text-gray-400">Branch Admin</span>
+                      <span className="font-medium">principal@school.com</span>
+                    </div>
+                    <div className="flex justify-between border-b border-white/5 pb-1">
+                      <span className="text-gray-400">Teacher</span>
+                      <span className="font-medium">teacher1@example.com</span>
+                    </div>
+                    <div className="flex justify-between border-b border-white/5 pb-1">
+                      <span className="text-gray-400">Student</span>
+                      <span className="font-medium">student1@example.com</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Parent</span>
+                      <span className="font-medium">parent1@example.com</span>
+                    </div>
+                    <div className="mt-4 pt-2 text-center bg-white/5 rounded-lg py-2">
+                      <span className="text-gray-400 text-[10px] uppercase tracking-[0.2em]">Default Password</span>
+                      <p className="text-[#92257B] font-black text-xl">any</p>
+                    </div>
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>
