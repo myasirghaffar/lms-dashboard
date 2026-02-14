@@ -37,21 +37,14 @@ const AppSidebar: React.FC = () => {
   const { user } = useAuth();
   const pathname = usePathname();
 
-  const [openSubmenu, setOpenSubmenu] = useState<{
-    type: "main" | "others";
-    index: number;
-  } | null>(null);
   const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>({});
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const isActive = useCallback((path: string) => path === pathname, [pathname]);
 
-  // Define navigation items based on requirements with UPDATED PATHS
+  // Define navigation items based on requirements
   const getNavItems = (): NavItem[] => {
-    // Common items visible to all or specific roles
     const items: NavItem[] = [];
-
-    // Dashboard - Redirects to role specific dashboard
     const dashboardPath = user?.role === 'SUPER_ADMIN' ? '/dashboard/super-admin' :
       user?.role === 'BRANCH_ADMIN' ? '/dashboard/branch-admin' :
         user?.role === 'TEACHER' ? '/dashboard/teacher' :
@@ -64,7 +57,6 @@ const AppSidebar: React.FC = () => {
       path: dashboardPath,
     });
 
-    // Super Admin Items
     if (user?.role === 'SUPER_ADMIN') {
       items.push(
         {
@@ -88,7 +80,6 @@ const AppSidebar: React.FC = () => {
       );
     }
 
-    // Branch Admin Items
     if (user?.role === 'BRANCH_ADMIN' || user?.role === 'SUPER_ADMIN') {
       items.push(
         {
@@ -120,7 +111,6 @@ const AppSidebar: React.FC = () => {
       );
     }
 
-    // Teacher Items
     if (user?.role === 'TEACHER') {
       items.push(
         {
@@ -146,7 +136,6 @@ const AppSidebar: React.FC = () => {
       );
     }
 
-    // Student Items
     if (user?.role === 'STUDENT') {
       items.push(
         {
@@ -177,7 +166,6 @@ const AppSidebar: React.FC = () => {
       );
     }
 
-    // Parent Items
     if (user?.role === 'PARENT') {
       items.push(
         {
@@ -231,31 +219,39 @@ const AppSidebar: React.FC = () => {
 
   const mainNavItems = getNavItems();
 
-  useEffect(() => {
-    // Check if the current path matches any submenu item
-    let submenuMatched = false;
+  const findMatchedSubmenu = useCallback(() => {
+    let matched: { type: "main" | "others"; index: number } | null = null;
     ["main", "others"].forEach((menuType) => {
       const items = menuType === "main" ? mainNavItems : commItems;
       items.forEach((nav, index) => {
         if (nav.subItems) {
           nav.subItems.forEach((subItem) => {
-            if (isActive(subItem.path)) {
-              setOpenSubmenu({
+            if (subItem.path === pathname) {
+              matched = {
                 type: menuType as "main" | "others",
                 index,
-              });
-              submenuMatched = true;
+              };
             }
           });
         }
       });
     });
+    return matched;
+  }, [mainNavItems, pathname]);
 
-    // If no submenu item matches, close the open submenu
-    if (!submenuMatched) {
-      setOpenSubmenu(null);
-    }
-  }, [pathname, isActive, user]);
+  const [openSubmenu, setOpenSubmenu] = useState<{
+    type: "main" | "others";
+    index: number;
+  } | null>(() => findMatchedSubmenu());
+
+  // Sync submenu when pathname or user role changes
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
+    const matched = findMatchedSubmenu();
+    setOpenSubmenu(matched);
+  }
+
 
   useEffect(() => {
     // Set the height of the submenu items when the submenu is opened
