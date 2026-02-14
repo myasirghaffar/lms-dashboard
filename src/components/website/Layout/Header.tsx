@@ -22,15 +22,15 @@ const Header = () => {
     return (
         <header className="w-full">
             {/* Top Bar */}
-            <div className="bg-[#0A4087] text-white py-2 px-4 md:px-8 hidden md:flex justify-between items-center text-xs">
-                <div className="flex gap-4">
-                    <span className="cursor-pointer hover:text-yellow-300 transition-colors">SMS Portal</span>
-                    <span className="cursor-pointer hover:text-yellow-300 transition-colors">Online Admission</span>
-                    <Link href="/signin" className="hover:text-yellow-300 transition-colors font-semibold">CMS Login</Link>
-                    <Link href="/signin" className="hover:text-yellow-300 transition-colors font-semibold">Staff Login</Link>
+            <div className="bg-[#0A4087] text-white py-2 px-4 md:px-8 flex justify-between items-center text-[10px] sm:text-xs">
+                <div className="flex gap-4 items-center">
+                    <span className="hidden md:block cursor-pointer hover:text-yellow-300 transition-colors">SMS Portal</span>
+                    <span className="hidden md:block cursor-pointer hover:text-yellow-300 transition-colors">Online Admission</span>
+                    <Link href="/login" className="hover:text-yellow-300 transition-colors font-semibold">CMS Login</Link>
+                    <span className="hidden md:block hover:text-yellow-300 transition-colors font-semibold cursor-pointer">Staff Login</span>
                 </div>
-                <div className="flex items-center gap-4">
-                    <div className="flex gap-2">
+                <div className="flex items-center gap-3 md:gap-4">
+                    <div className="flex gap-2 sm:gap-3">
                         <Facebook size={14} className="cursor-pointer hover:text-yellow-300" />
                         <Twitter size={14} className="cursor-pointer hover:text-yellow-300" />
                         <Instagram size={14} className="cursor-pointer hover:text-yellow-300" />

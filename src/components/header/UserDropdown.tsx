@@ -23,7 +23,7 @@ export default function UserDropdown() {
 
   const handleLogout = () => {
     logout();
-    router.push("/signin");
+    router.push("/");
   };
 
   return (
