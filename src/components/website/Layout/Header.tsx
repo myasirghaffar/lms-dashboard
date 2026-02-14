@@ -24,10 +24,10 @@ const Header = () => {
             {/* Top Bar */}
             <div className="bg-[#0A4087] text-white py-2 px-4 md:px-8 hidden md:flex justify-between items-center text-xs">
                 <div className="flex gap-4">
-                    <span>SMS Portal</span>
-                    <span>Online Admission</span>
-                    <span>CMS Login</span>
-                    <span>Staff Login</span>
+                    <span className="cursor-pointer hover:text-yellow-300 transition-colors">SMS Portal</span>
+                    <span className="cursor-pointer hover:text-yellow-300 transition-colors">Online Admission</span>
+                    <Link href="/signin" className="hover:text-yellow-300 transition-colors font-semibold">CMS Login</Link>
+                    <Link href="/signin" className="hover:text-yellow-300 transition-colors font-semibold">Staff Login</Link>
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="flex gap-2">
