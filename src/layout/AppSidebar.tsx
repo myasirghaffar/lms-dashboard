@@ -76,6 +76,11 @@ const AppSidebar: React.FC = () => {
           name: "Finance",
           icon: <DollarSign className="w-5 h-5" />,
           path: "/dashboard/super-admin/finance/overview",
+        },
+        {
+          name: "Fees",
+          icon: <DollarSign className="w-5 h-5" />,
+          path: "/dashboard/fees",
         }
       );
     }
@@ -107,6 +112,11 @@ const AppSidebar: React.FC = () => {
             { name: "Subjects", path: "/dashboard/branch-admin/academics/subjects" },
             { name: "Timetable", path: "/dashboard/branch-admin/academics/timetable" },
           ]
+        },
+        {
+          name: "Fees",
+          icon: <DollarSign className="w-5 h-5" />,
+          path: "/dashboard/fees",
         }
       );
     }

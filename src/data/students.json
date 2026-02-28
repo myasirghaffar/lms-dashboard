@@ -1,10 +1,67 @@
 [
-    {
-        "id": "student_1",
-        "userId": "user_3",
-        "parentId": "user_4",
-        "branchId": "branch_1",
-        "classId": "class_1",
-        "rollNumber": "ST-001"
-    }
+  {
+    "id": "AMS-11254-510M",
+    "userId": "user_3",
+    "parentId": "user_4",
+    "branchId": "branch_main",
+    "classId": "class_9_boys",
+    "rollNumber": "9B-001",
+    "name": "Zaid Fiaz",
+    "fatherName": "Fiaz Ahmad",
+    "class": "9th Boys",
+    "previousBalance": 80000,
+    "monthlyFee": 2500
+  },
+  {
+    "id": "AMS-11254-58M",
+    "userId": "user_muddassar",
+    "parentId": "user_4",
+    "branchId": "branch_main",
+    "classId": "class_10_boys",
+    "rollNumber": "10B-004",
+    "name": "Muddassar Bashir",
+    "fatherName": "Bashir Ahmad",
+    "class": "10th Boys",
+    "previousBalance": 20000,
+    "monthlyFee": 2500
+  },
+  {
+    "id": "AMS-11254-72G",
+    "userId": "user_aleena",
+    "parentId": "user_4",
+    "branchId": "branch_main",
+    "classId": "class_8_girls",
+    "rollNumber": "8G-012",
+    "name": "Aleena Tariq",
+    "fatherName": "Tariq Mehmood",
+    "class": "8th Girls",
+    "previousBalance": 6500,
+    "monthlyFee": 2300
+  },
+  {
+    "id": "AMS-11254-91M",
+    "userId": "user_hassan",
+    "parentId": "user_4",
+    "branchId": "branch_main",
+    "classId": "class_7_boys",
+    "rollNumber": "7B-021",
+    "name": "Hassan Raza",
+    "fatherName": "Raza Iqbal",
+    "class": "7th Boys",
+    "previousBalance": 0,
+    "monthlyFee": 2200
+  },
+  {
+    "id": "AMS-11254-34G",
+    "userId": "user_maryam",
+    "parentId": "user_4",
+    "branchId": "branch_main",
+    "classId": "class_6_girls",
+    "rollNumber": "6G-007",
+    "name": "Maryam Khan",
+    "fatherName": "Adnan Khan",
+    "class": "6th Girls",
+    "previousBalance": 1200,
+    "monthlyFee": 2100
+  }
 ]
