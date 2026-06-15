@@ -70,6 +70,8 @@ const AppSidebar: React.FC = () => {
           subItems: [
             { name: "Admins", path: "/dashboard/super-admin/users/admins" },
             { name: "Principals", path: "/dashboard/super-admin/users/principals" },
+            { name: "All Students", path: "/dashboard/super-admin/users/students" },
+            { name: "All Teachers", path: "/dashboard/super-admin/users/teachers" },
           ]
         },
         {

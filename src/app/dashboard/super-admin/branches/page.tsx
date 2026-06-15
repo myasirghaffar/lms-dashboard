@@ -20,6 +20,7 @@ import ConfirmModal from '@/components/ui/modal/ConfirmModal';
 import { Dropdown } from '@/components/ui/dropdown/Dropdown';
 import { DropdownItem } from '@/components/ui/dropdown/DropdownItem';
 import type { BranchFormValues, BranchRecord } from '@/types/branches';
+import type { SystemUserRecord } from '@/types/user-management';
 
 type DeleteState = {
     isOpen: boolean;
@@ -61,6 +62,7 @@ async function requestBranches<T>(path: string, init?: RequestInit): Promise<T> 
 
 export default function BranchesPage() {
     const [branches, setBranches] = React.useState<BranchRecord[]>([]);
+    const [principals, setPrincipals] = React.useState<SystemUserRecord[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
     const [isSubmitting, setIsSubmitting] = React.useState(false);
     const [errorMessage, setErrorMessage] = React.useState('');
@@ -77,8 +79,12 @@ export default function BranchesPage() {
         setErrorMessage('');
 
         try {
-            const payload = await requestBranches<{ branches: BranchRecord[] }>('/api/branches');
-            setBranches(payload.branches);
+            const [branchesPayload, principalsPayload] = await Promise.all([
+                requestBranches<{ branches: BranchRecord[] }>('/api/branches'),
+                requestBranches<{ users: SystemUserRecord[] }>('/api/users?role=BRANCH_ADMIN'),
+            ]);
+            setBranches(branchesPayload.branches);
+            setPrincipals(principalsPayload.users);
         } catch (error) {
             setErrorMessage(error instanceof Error ? error.message : 'Unable to load branches.');
         } finally {
@@ -212,6 +218,7 @@ export default function BranchesPage() {
                     onSubmit={handleSaveBranch}
                     branch={editingBranch}
                     isSubmitting={isSubmitting}
+                    principals={principals}
                 />
 
                 <ConfirmModal

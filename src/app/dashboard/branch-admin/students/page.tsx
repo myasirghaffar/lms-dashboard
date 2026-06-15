@@ -2,10 +2,13 @@
 
 import React, { useState } from 'react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
-import { Users, Search, Filter, MoreHorizontal, GraduationCap, Eye, Edit, Trash2 } from 'lucide-react';
-import { getStudents, getUsers, getClasses } from '@/lib/api';
+import { Search, Filter, GraduationCap, Eye, Edit, Trash2 } from 'lucide-react';
 import StudentModal from '@/components/dashboard/students/StudentModal';
 import Image from 'next/image';
+import { requestDashboardApi } from '@/lib/dashboardApi';
+import type { SchoolClassRecord, StudentManagementRecord } from '@/types/user-management';
+import type { StudentFormValues } from '@/components/dashboard/students/StudentModal';
+import ConfirmModal from '@/components/ui/modal/ConfirmModal';
 
 export default function StudentsPage() {
     const [modalState, setModalState] = useState<{
@@ -18,12 +21,36 @@ export default function StudentsPage() {
         selectedData: null,
     });
     const [searchTerm, setSearchTerm] = useState('');
+    const [students, setStudents] = useState<StudentManagementRecord[]>([]);
+    const [classes, setClasses] = useState<SchoolClassRecord[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
+    const [deletingStudent, setDeletingStudent] = useState<StudentManagementRecord | null>(null);
 
-    const students = getStudents();
-    const users = getUsers();
-    const classes = getClasses();
+    const loadStudents = React.useCallback(async () => {
+        setIsLoading(true);
+        setErrorMessage('');
 
-    const handleOpenModal = (mode: 'add' | 'edit' | 'view', data: any = null) => {
+        try {
+            const [studentsPayload, classesPayload] = await Promise.all([
+                requestDashboardApi<{ students: StudentManagementRecord[] }>('/api/students'),
+                requestDashboardApi<{ classes: SchoolClassRecord[] }>('/api/classes'),
+            ]);
+            setStudents(studentsPayload.students);
+            setClasses(classesPayload.classes);
+        } catch (error) {
+            setErrorMessage(error instanceof Error ? error.message : 'Unable to load students.');
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    React.useEffect(() => {
+        void loadStudents();
+    }, [loadStudents]);
+
+    const handleOpenModal = (mode: 'add' | 'edit' | 'view', data: StudentManagementRecord | null = null) => {
         setModalState({
             isOpen: true,
             mode,
@@ -31,23 +58,50 @@ export default function StudentsPage() {
         });
     };
 
-    const studentList = students.map(student => {
-        const user = users.find(u => u.id === student.userId);
-        const studentClass = classes.find(c => c.id === student.classId);
-        const parent = student.parentId ? users.find(u => u.id === student.parentId) : null;
+    const handleSaveStudent = async (values: StudentFormValues) => {
+        setIsSubmitting(true);
+        setErrorMessage('');
 
-        return {
-            ...student,
-            name: user?.name || 'Unknown',
-            email: user?.email || 'N/A',
-            className: studentClass?.name || 'Unassigned',
-            parentName: parent?.name || 'N/A',
-            profileImage: user?.profileImage
-        };
-    }).filter(student =>
+        try {
+            if (modalState.mode === 'edit' && modalState.selectedData) {
+                await requestDashboardApi<{ student: StudentManagementRecord }>(`/api/students/${modalState.selectedData.id}`, {
+                    method: 'PATCH',
+                    body: JSON.stringify(values),
+                });
+            } else {
+                await requestDashboardApi<{ student: StudentManagementRecord }>('/api/students', {
+                    method: 'POST',
+                    body: JSON.stringify(values),
+                });
+            }
+            setModalState({ isOpen: false, mode: 'add', selectedData: null });
+            await loadStudents();
+        } catch (error) {
+            setErrorMessage(error instanceof Error ? error.message : 'Unable to save student.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleDeleteStudent = async () => {
+        if (!deletingStudent) return;
+        setErrorMessage('');
+
+        try {
+            await requestDashboardApi<{ success: boolean }>(`/api/students/${deletingStudent.id}`, { method: 'DELETE' });
+            setStudents((current) => current.filter((student) => student.id !== deletingStudent.id));
+        } catch (error) {
+            setErrorMessage(error instanceof Error ? error.message : 'Unable to delete student.');
+        } finally {
+            setDeletingStudent(null);
+        }
+    };
+
+    const studentList = students.filter(student =>
         student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.rollNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.email.toLowerCase().includes(searchTerm.toLowerCase())
+        student.roll_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (student.class_name || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
@@ -72,7 +126,26 @@ export default function StudentsPage() {
                     onClose={() => setModalState(prev => ({ ...prev, isOpen: false }))}
                     mode={modalState.mode}
                     initialData={modalState.selectedData}
+                    classes={classes}
+                    onSubmit={handleSaveStudent}
+                    isSubmitting={isSubmitting}
                 />
+
+                <ConfirmModal
+                    isOpen={Boolean(deletingStudent)}
+                    onClose={() => setDeletingStudent(null)}
+                    onConfirm={handleDeleteStudent}
+                    title="Delete Student"
+                    message={`Are you sure you want to delete ${deletingStudent?.name || 'this student'}?`}
+                    confirmText="Delete"
+                    variant="danger"
+                />
+
+                {errorMessage && (
+                    <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">
+                        {errorMessage}
+                    </div>
+                )}
 
                 <div className="flex flex-col sm:flex-row gap-4">
                     <div className="relative flex-1">
@@ -104,13 +177,21 @@ export default function StudentsPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                                {studentList.map((student) => (
+                                {isLoading && [1, 2, 3, 4, 5].map((item) => (
+                                    <tr key={item}>
+                                        <td colSpan={5} className="px-6 py-4">
+                                            <div className="h-10 animate-pulse rounded-lg bg-gray-100 dark:bg-gray-700" />
+                                        </td>
+                                    </tr>
+                                ))}
+
+                                {!isLoading && studentList.map((student) => (
                                     <tr key={student.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center">
                                                 <div className="relative h-10 w-10 rounded-full overflow-hidden bg-gray-200">
                                                     <Image
-                                                        src={student.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name)}`}
+                                                        src={student.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name)}`}
                                                         alt={student.name}
                                                         fill
                                                         className="h-full w-full object-cover"
@@ -123,15 +204,15 @@ export default function StudentsPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
-                                            {student.rollNumber}
+                                            {student.roll_number}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className="px-2 py-1 text-xs font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-full">
-                                                {student.className}
+                                                {student.class_name || 'Unassigned'}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
-                                            {student.parentName}
+                                            {student.parent_name || student.father_name || 'N/A'}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <div className="flex items-center justify-end gap-2">
@@ -147,14 +228,17 @@ export default function StudentsPage() {
                                                 >
                                                     <Edit className="w-4 h-4" />
                                                 </button>
-                                                <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-red-600 transition">
+                                                <button
+                                                    onClick={() => setDeletingStudent(student)}
+                                                    className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-red-600 transition"
+                                                >
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
                                             </div>
                                         </td>
                                     </tr>
                                 ))}
-                                {studentList.length === 0 && (
+                                {!isLoading && studentList.length === 0 && (
                                     <tr>
                                         <td colSpan={5} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                                             No students found matching your search.

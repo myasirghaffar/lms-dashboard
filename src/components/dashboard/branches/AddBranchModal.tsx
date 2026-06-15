@@ -4,6 +4,7 @@ import { Modal } from "@/components/ui/modal";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import type { BranchFormValues, BranchRecord } from "@/types/branches";
+import type { SystemUserRecord } from "@/types/user-management";
 
 interface AddBranchModalProps {
     isOpen: boolean;
@@ -11,6 +12,7 @@ interface AddBranchModalProps {
     onSubmit: (values: BranchFormValues) => Promise<void>;
     branch?: BranchRecord | null;
     isSubmitting?: boolean;
+    principals?: SystemUserRecord[];
 }
 
 const emptyForm: BranchFormValues = {
@@ -28,6 +30,7 @@ const AddBranchModal: React.FC<AddBranchModalProps> = ({
     onSubmit,
     branch = null,
     isSubmitting = false,
+    principals = [],
 }) => {
     const [formData, setFormData] = React.useState<BranchFormValues>(emptyForm);
 
@@ -41,6 +44,7 @@ const AddBranchModal: React.FC<AddBranchModalProps> = ({
                 phone_number: branch.phone_number,
                 email: branch.email,
                 principal_name: branch.principal_name,
+                principal_profile_id: branch.principal_profile_id || "",
                 status: branch.status,
             });
         } else {
@@ -80,7 +84,7 @@ const AddBranchModal: React.FC<AddBranchModalProps> = ({
                             placeholder="e.g. Main Branch"
                             name="branchName"
                             type="text"
-                            defaultValue={formData.name}
+                            value={formData.name}
                             onChange={handleChange("name")}
                             required
                         />
@@ -93,7 +97,7 @@ const AddBranchModal: React.FC<AddBranchModalProps> = ({
                             placeholder="e.g. 123 Education Blvd"
                             name="address"
                             type="text"
-                            defaultValue={formData.address}
+                            value={formData.address}
                             onChange={handleChange("address")}
                             required
                         />
@@ -107,21 +111,34 @@ const AddBranchModal: React.FC<AddBranchModalProps> = ({
                                 placeholder="+1 234 567 890"
                                 name="phone"
                                 type="tel"
-                                defaultValue={formData.phone_number}
+                                value={formData.phone_number}
                                 onChange={handleChange("phone_number")}
                                 required
                             />
                         </div>
                         <div>
                             <Label htmlFor="principal">Principal Name</Label>
-                            <Input
+                            <select
                                 id="principal"
-                                placeholder="Full Name"
                                 name="principal"
-                                type="text"
-                                defaultValue={formData.principal_name}
-                                onChange={handleChange("principal_name")}
-                            />
+                                value={formData.principal_profile_id || ""}
+                                onChange={(e) => {
+                                    const selectedPrincipal = principals.find((principal) => principal.id === e.target.value);
+                                    setFormData((current) => ({
+                                        ...current,
+                                        principal_profile_id: e.target.value,
+                                        principal_name: selectedPrincipal?.name || "",
+                                    }));
+                                }}
+                                className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+                            >
+                                <option value="">Select Principal</option>
+                                {principals.map((principal) => (
+                                    <option key={principal.id} value={principal.id}>
+                                        {principal.name}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
                     </div>
 
@@ -133,7 +150,7 @@ const AddBranchModal: React.FC<AddBranchModalProps> = ({
                                 placeholder="branch@school.com"
                                 name="email"
                                 type="email"
-                                defaultValue={formData.email}
+                                value={formData.email}
                                 onChange={handleChange("email")}
                             />
                         </div>

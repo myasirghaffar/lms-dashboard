@@ -8,6 +8,7 @@ export interface BranchRecord {
     phone_number: string;
     email: string;
     principal_name: string;
+    principal_profile_id: string | null;
     status: BranchStatus;
     created_at: string;
     updated_at: string;
@@ -19,5 +20,6 @@ export interface BranchFormValues {
     phone_number: string;
     email: string;
     principal_name: string;
+    principal_profile_id?: string | null;
     status: BranchStatus;
 }

@@ -66,7 +66,7 @@ export default function LoginPage() {
 
   return (
     <div className="w-full flex items-center justify-center">
-      <div className="w-full max-w-4xl flex sm:flex-row flex-col justify-between items-center">
+      <div className="w-full max-w-5xl flex sm:flex-row flex-col justify-between items-center">
         {/* Logo and Title */}
         <div className="text-center mb-6 sm:mb-8">
           <div className="inline-flex items-center justify-center mb-4">
@@ -83,7 +83,7 @@ export default function LoginPage() {
         </div>
 
         {/* Login Form */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5 sm:p-8 border border-gray-200 dark:border-gray-700">
+        <div className="w-full sm:w-[520px] bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5 sm:p-8 border border-gray-200 dark:border-gray-700">
           <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             {/* Role Selection */}
             <div>
