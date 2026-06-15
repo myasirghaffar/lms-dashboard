@@ -1,8 +1,8 @@
 "use client";
 import React from "react";
-import Image from "next/image";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, Autoplay } from "swiper/modules";
+import { BookOpenCheck, Calculator, Globe2, Languages, MonitorCog, PenTool, Sprout } from "lucide-react";
 
 // Import Swiper styles
 import "swiper/css";
@@ -11,30 +11,25 @@ import "swiper/css/pagination";
 
 const BooksSection = () => {
     const books = [
-        { name: "Urdu", color: "#92257B", level: "Level 1", image: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=800&auto=format&fit=crop" },
-        { name: "English", color: "#0A4087", level: "Level 2", image: "https://images.unsplash.com/photo-1543004629-ff56ec21d484?q=80&w=800&auto=format&fit=crop" },
-        { name: "Science", color: "#379962", level: "Level 3", image: "https://images.unsplash.com/photo-1532012197367-9b597de7d3d5?q=80&w=800&auto=format&fit=crop" },
-        { name: "Math", color: "#92257B", level: "Level 4", image: "https://images.unsplash.com/photo-1509062522246-373b1d5911d8?q=80&w=800&auto=format&fit=crop" },
-        { name: "Islamiyat", color: "#0A4087", level: "Level 5", image: "https://images.unsplash.com/photo-1585779034823-7e9ac8faec70?q=80&w=800&auto=format&fit=crop" },
-        { name: "History", color: "#379962", level: "Level 6", image: "https://images.unsplash.com/photo-1491841573634-28140fc7ced7?q=80&w=800&auto=format&fit=crop" },
-        { name: "Geography", color: "#92257B", level: "Level 7", image: "https://images.unsplash.com/photo-1521295121783-8a321d551ad2?q=80&w=800&auto=format&fit=crop" },
+        { name: "English", icon: Languages, level: "Language", accent: "#0A4087", cover: "#123f83" },
+        { name: "Urdu", icon: PenTool, level: "Expression", accent: "#92257B", cover: "#8a236f" },
+        { name: "Mathematics", icon: Calculator, level: "Reasoning", accent: "#379962", cover: "#24764a" },
+        { name: "Science", icon: Sprout, level: "Discovery", accent: "#0A4087", cover: "#0b5b8f" },
+        { name: "Islamiyat", icon: BookOpenCheck, level: "Values", accent: "#92257B", cover: "#284b7f" },
+        { name: "Computer", icon: MonitorCog, level: "Digital", accent: "#379962", cover: "#ffffff" },
+        { name: "Social Studies", icon: Globe2, level: "Awareness", accent: "#0A4087", cover: "#294d84" },
     ];
 
     return (
-        <section className="py-20 bg-[#0A4087] text-white relative overflow-hidden">
-            {/* Abstract Background Shapes */}
-            <div className="absolute top-0 right-0 w-80 h-80 bg-[#92257B] rounded-full blur-[120px] opacity-20 -mr-40 -mt-40 animate-pulse" />
-            <div className="absolute bottom-0 left-0 w-80 h-80 bg-[#379962] rounded-full blur-[120px] opacity-10 -ml-40 -mb-40 animate-pulse" />
-
+        <section className="relative overflow-hidden bg-school-blue-deep py-24 text-white">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-                <div className="text-center mb-16">
-                    <h2 className="text-3xl md:text-5xl font-black mb-4 uppercase tracking-tighter">
-                        AMS TALWANDI BOOKS
+                <div className="mx-auto mb-14 max-w-3xl text-center">
+                    <p className="text-sm font-black uppercase tracking-[0.24em] text-school-gold">Curriculum coverage</p>
+                    <h2 className="mt-3 text-3xl font-black md:text-5xl">
+                        Subject pathways for every stage of learning.
                     </h2>
-                    <div className="w-24 h-1.5 bg-[#92257B] mx-auto mb-6 rounded-full" />
-                    <p className="text-blue-200 text-lg max-w-2xl mx-auto font-medium">
-                        Curriculum developed with efficient and effective pedagogical techniques,
-                        tailored for modern learning environments.
+                    <p className="mt-5 text-white/72">
+                        Textbooks, classwork, homework, quizzes, and exam records are aligned so teachers and parents can see where each student needs support.
                     </p>
                 </div>
 
@@ -44,9 +39,9 @@ const BooksSection = () => {
                         spaceBetween={30}
                         slidesPerView={1}
                         loop={true}
-                        speed={12000}
+                        speed={900}
                         autoplay={{
-                            delay: 0,
+                            delay: 1600,
                             disableOnInteraction: false,
                             pauseOnMouseEnter: true,
                         }}
@@ -55,56 +50,66 @@ const BooksSection = () => {
                         allowTouchMove={true}
                         breakpoints={{
                             640: { slidesPerView: 2 },
-                            1024: { slidesPerView: 4 },
-                            1280: { slidesPerView: 5 },
+                            1024: { slidesPerView: 3 },
+                            1280: { slidesPerView: 4 },
                         }}
-                        className="!pb-24 !px-4 !overflow-visible"
+                        className="!pb-12 !px-1"
                     >
-                        {books.map((book, index) => (
-                            <SwiperSlide key={index}>
-                                <div className="group cursor-pointer" style={{ perspective: '1200px' }}>
-                                    <div className="relative aspect-[3/4.5] rounded-l-md rounded-r-xl overflow-hidden shadow-2xl transition-all duration-700 ease-out group-hover:[transform:rotateY(-25deg)_translateX(15px)_translateZ(20px)] border-l-[12px] border-white/10 group-hover:border-white/20">
-                                        <Image
-                                            src={book.image}
-                                            alt={book.name}
-                                            fill
-                                            className="object-cover transition-transform duration-1000 group-hover:scale-110"
-                                        />
+                        {books.map((book, index) => {
+                            const Icon = book.icon;
+                            const isLight = book.cover === "#ffffff";
 
-                                        {/* Book Spine Texture */}
-                                        <div className="absolute inset-y-0 left-0 w-[12px] bg-black/40 z-20 backdrop-blur-[2px] shadow-[inset_-3px_0_8px_rgba(0,0,0,0.6)]" />
+                            return (
+                                <SwiperSlide key={index} className="!h-auto">
+                                    <div className="group flex h-full py-2 [perspective:1200px]">
+                                        <div
+                                            className="relative flex h-[430px] w-full overflow-hidden border border-white/15 shadow-2xl shadow-black/20 transition-all duration-500 group-hover:-translate-y-2 group-hover:[transform:rotateY(-7deg)]"
+                                            style={{
+                                                background: `linear-gradient(145deg, ${book.cover} 0%, ${book.cover} 48%, ${book.accent} 160%)`,
+                                            }}
+                                        >
+                                            <div className="absolute inset-y-0 left-0 w-8 bg-black/22 shadow-[inset_-10px_0_18px_rgba(0,0,0,0.28)]" />
+                                            <div className="absolute inset-y-0 left-8 w-px bg-white/18" />
+                                            <div className="absolute inset-y-3 right-0 w-2 bg-gradient-to-l from-white/60 to-white/10" />
+                                            <div className="absolute -right-14 -top-14 h-40 w-40 bg-white/10 blur-2xl" />
+                                            <div className="absolute bottom-0 left-8 right-0 h-28 bg-gradient-to-t from-black/26 to-transparent" />
 
-                                        {/* Premium Overlay */}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent z-10 opacity-80 group-hover:opacity-60 transition-opacity" />
+                                            <div className="relative flex flex-1 flex-col p-8 pl-12">
+                                                <div className="flex items-start justify-between gap-4">
+                                                    <div className="flex h-16 w-16 items-center justify-center text-white shadow-xl" style={{ backgroundColor: book.accent }}>
+                                                        <Icon size={32} />
+                                                    </div>
+                                                    <div className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] ${isLight ? "bg-school-blue text-white" : "bg-white/16 text-white"}`}>
+                                                        AMS
+                                                    </div>
+                                                </div>
 
-                                        <div className="absolute inset-x-0 bottom-0 z-20 p-6 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
-                                            <div className="mb-3">
-                                                <span className="inline-block px-2.5 py-1 rounded bg-[#92257B] text-[10px] font-black uppercase tracking-widest text-white mb-2 shadow-lg">
-                                                    {book.level}
-                                                </span>
-                                                <h3 className="text-2xl font-black text-white leading-[0.9] uppercase italic tracking-tighter">
-                                                    {book.name}
-                                                </h3>
+                                                <div className="mt-12">
+                                                    <p className={`text-xs font-black uppercase tracking-[0.28em] ${isLight ? "text-school-gold" : "text-school-gold"}`}>
+                                                        {book.level}
+                                                    </p>
+                                                    <h3 className={`mt-4 text-3xl font-black leading-tight ${isLight ? "text-school-blue" : "text-white"}`}>
+                                                        {book.name}
+                                                    </h3>
+                                                    <div className="mt-5 h-1 w-14 rounded-full" style={{ backgroundColor: book.accent }} />
+                                                </div>
+
+                                                <p className={`mt-8 text-sm font-semibold leading-7 ${isLight ? "text-school-blue/72" : "text-white/78"}`}>
+                                                    Class content, homework, exams, and teacher notes organized inside the school workflow.
+                                                </p>
+
+                                                <div className="mt-auto pt-8">
+                                                    <div className={`flex items-center justify-between border-t pt-4 ${isLight ? "border-school-blue/12 text-school-blue" : "border-white/18 text-white"}`}>
+                                                        <span className="text-[11px] font-black uppercase tracking-[0.24em]">Curriculum</span>
+                                                        <span className="text-2xl font-black">0{index + 1}</span>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="w-0 group-hover:w-full h-1 bg-white/40 transition-all duration-700 delay-100" />
-                                        </div>
-
-                                        {/* Page Edges Highlight */}
-                                        <div className="absolute right-0 inset-y-1 w-1.5 bg-gradient-to-l from-white/30 to-transparent z-20 rounded-r-full" />
-
-                                        {/* Surface Shine */}
-                                        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
                                     </div>
-
-                                    <div className="mt-8 text-center transition-all duration-500 transform translate-y-6 opacity-0 group-hover:opacity-100 group-hover:translate-y-0">
-                                        <p className="text-white/50 text-[10px] font-black uppercase tracking-[0.3em] mb-3">Academic Series</p>
-                                        <button className="bg-white text-[#0A4087] hover:bg-[#92257B] hover:text-white px-8 py-2.5 rounded-full text-xs font-black uppercase transition-all duration-300 shadow-[0_10px_20px_rgba(0,0,0,0.3)] hover:shadow-[0_15px_30px_rgba(0,0,0,0.4)] hover:-translate-y-1 active:translate-y-0">
-                                            View Content
-                                        </button>
                                     </div>
-                                </div>
-                            </SwiperSlide>
-                        ))}
+                                </SwiperSlide>
+                            );
+                        })}
                     </Swiper>
                 </div>
             </div>
@@ -112,12 +117,12 @@ const BooksSection = () => {
             {/* Custom Carousel Styles for this specific section */}
             <style jsx>{`
                 :global(.carouselFour .swiper-wrapper) {
-                    transition-timing-function: linear !important;
+                    transition-timing-function: ease !important;
                 }
                 :global(.carouselFour .swiper-button-next),
                 :global(.carouselFour .swiper-button-prev) {
                     background: white !important;
-                    color: #0A4087 !important;
+                    color: #0a4087 !important;
                     width: 50px !important;
                     height: 50px !important;
                     border-radius: 50% !important;
@@ -126,7 +131,7 @@ const BooksSection = () => {
                 }
                 :global(.carouselFour .swiper-button-next:hover),
                 :global(.carouselFour .swiper-button-prev:hover) {
-                    background: #92257B !important;
+                    background: #92257b !important;
                     color: white !important;
                     transform: scale(1.1) !important;
                 }
@@ -145,7 +150,7 @@ const BooksSection = () => {
                 }
                 :global(.carouselFour .swiper-pagination-bullet-active) {
                     opacity: 1 !important;
-                    background: #92257B !important;
+                    background: #f6c945 !important;
                     width: 35px !important;
                     border-radius: 5px !important;
                 }
@@ -155,4 +160,3 @@ const BooksSection = () => {
 };
 
 export default BooksSection;
-

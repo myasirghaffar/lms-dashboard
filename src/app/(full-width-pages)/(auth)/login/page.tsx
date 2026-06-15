@@ -15,11 +15,11 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
 
   const DEMO_CREDENTIALS: Record<UserRole, { email: string; password: string }> = {
-    SUPER_ADMIN: { email: 'admin@example.com', password: 'any' },
-    BRANCH_ADMIN: { email: 'principal@school.com', password: 'any' },
-    TEACHER: { email: 'teacher1@example.com', password: 'any' },
-    STUDENT: { email: 'student1@example.com', password: 'any' },
-    PARENT: { email: 'parent1@example.com', password: 'any' },
+    SUPER_ADMIN: { email: 'super.admin@amstalwandi.edu.pk', password: 'AMS-SUPER-2026' },
+    BRANCH_ADMIN: { email: 'branch.admin@amstalwandi.edu.pk', password: 'AMS-BRANCH-2026' },
+    TEACHER: { email: 'teacher@amstalwandi.edu.pk', password: 'AMS-TEACHER-2026' },
+    STUDENT: { email: 'student@amstalwandi.edu.pk', password: 'AMS-STUDENT-2026' },
+    PARENT: { email: 'parent@amstalwandi.edu.pk', password: 'AMS-PARENT-2026' },
   };
 
   const [formData, setFormData] = useState({
@@ -28,6 +28,7 @@ export default function LoginPage() {
     role: 'STUDENT' as UserRole,
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleRoleChange = (role: UserRole) => {
     setFormData({
@@ -41,6 +42,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setErrorMessage('');
 
     try {
       await login(formData.email, formData.password, formData.role);
@@ -57,6 +59,7 @@ export default function LoginPage() {
       router.push(roleRoutes[formData.role]);
     } catch (error) {
       console.error('Login failed:', error);
+      setErrorMessage(error instanceof Error ? error.message : 'Login failed. Please try again.');
       setIsLoading(false);
     }
   };
@@ -142,6 +145,12 @@ export default function LoginPage() {
                 </button>
               </div>
             </div>
+
+            {errorMessage && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">
+                {errorMessage}
+              </div>
+            )}
 
             {/* Remember Me & Forgot Password */}
             <div className="flex items-center justify-between">

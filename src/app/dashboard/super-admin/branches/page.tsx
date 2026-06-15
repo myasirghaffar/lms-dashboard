@@ -2,105 +2,333 @@
 
 import React from 'react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
-import { Building2, MapPin, Phone, Users, MoreHorizontal } from 'lucide-react';
-import { getBranches, getStudents, getTeachers } from '@/lib/api';
+import {
+    Building2,
+    Edit3,
+    MapPin,
+    MoreHorizontal,
+    Phone,
+    Power,
+    PowerOff,
+    Trash2,
+    Users,
+} from 'lucide-react';
+import { getStudents, getTeachers } from '@/lib/api';
+import { supabase } from '@/lib/supabase';
 import AddBranchModal from '@/components/dashboard/branches/AddBranchModal';
 import ConfirmModal from '@/components/ui/modal/ConfirmModal';
+import { Dropdown } from '@/components/ui/dropdown/Dropdown';
+import { DropdownItem } from '@/components/ui/dropdown/DropdownItem';
+import type { BranchFormValues, BranchRecord } from '@/types/branches';
+
+type DeleteState = {
+    isOpen: boolean;
+    branch: BranchRecord | null;
+};
+
+const studentsData = getStudents();
+const teachersData = getTeachers();
+
+async function getAccessToken() {
+    const { data, error } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+
+    if (error || !token) {
+        throw new Error('Your session expired. Please login again.');
+    }
+
+    return token;
+}
+
+async function requestBranches<T>(path: string, init?: RequestInit): Promise<T> {
+    const token = await getAccessToken();
+    const response = await fetch(path, {
+        ...init,
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+            ...(init?.headers || {}),
+        },
+    });
+    const payload = await response.json();
+
+    if (!response.ok) {
+        throw new Error(payload.error || 'Branch request failed.');
+    }
+
+    return payload as T;
+}
 
 export default function BranchesPage() {
-    const [isModalOpen, setIsModalOpen] = React.useState(false);
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
-    const [branchToDelete, setBranchToDelete] = React.useState<string | null>(null);
-    const branchesData = getBranches();
-    const studentsData = getStudents();
-    const teachersData = getTeachers();
+    const [branches, setBranches] = React.useState<BranchRecord[]>([]);
+    const [isLoading, setIsLoading] = React.useState(true);
+    const [isSubmitting, setIsSubmitting] = React.useState(false);
+    const [errorMessage, setErrorMessage] = React.useState('');
+    const [openMenuId, setOpenMenuId] = React.useState<string | null>(null);
+    const [editingBranch, setEditingBranch] = React.useState<BranchRecord | null>(null);
+    const [isBranchModalOpen, setIsBranchModalOpen] = React.useState(false);
+    const [deleteState, setDeleteState] = React.useState<DeleteState>({
+        isOpen: false,
+        branch: null,
+    });
 
-    const branches = branchesData.map(branch => ({
-        id: branch.id,
-        name: branch.name,
-        location: branch.address || 'No Address',
-        contact: branch.phoneNumber || 'No Contact',
-        principal: 'Principal Name',
-        students: studentsData.filter(s => s.branchId === branch.id).length,
-        teachers: teachersData.filter(t => t.branchId === branch.id).length,
-        status: 'Active'
-    }));
+    const loadBranches = React.useCallback(async () => {
+        setIsLoading(true);
+        setErrorMessage('');
+
+        try {
+            const payload = await requestBranches<{ branches: BranchRecord[] }>('/api/branches');
+            setBranches(payload.branches);
+        } catch (error) {
+            setErrorMessage(error instanceof Error ? error.message : 'Unable to load branches.');
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    React.useEffect(() => {
+        void loadBranches();
+    }, [loadBranches]);
+
+    const getCounts = (branch: BranchRecord) => {
+        const branchKey = branch.legacy_id || branch.id;
+
+        return {
+            students: studentsData.filter((student) => student.branchId === branchKey).length,
+            teachers: teachersData.filter((teacher) => teacher.branchId === branchKey).length,
+        };
+    };
+
+    const openCreateModal = () => {
+        setEditingBranch(null);
+        setIsBranchModalOpen(true);
+    };
+
+    const openEditModal = (branch: BranchRecord) => {
+        setOpenMenuId(null);
+        setEditingBranch(branch);
+        setIsBranchModalOpen(true);
+    };
+
+    const closeBranchModal = () => {
+        if (isSubmitting) return;
+        setIsBranchModalOpen(false);
+        setEditingBranch(null);
+    };
+
+    const handleSaveBranch = async (values: BranchFormValues) => {
+        setIsSubmitting(true);
+        setErrorMessage('');
+
+        try {
+            if (editingBranch) {
+                const payload = await requestBranches<{ branch: BranchRecord }>(`/api/branches/${editingBranch.id}`, {
+                    method: 'PATCH',
+                    body: JSON.stringify(values),
+                });
+
+                setBranches((current) =>
+                    current.map((branch) => branch.id === payload.branch.id ? payload.branch : branch)
+                );
+            } else {
+                const payload = await requestBranches<{ branch: BranchRecord }>('/api/branches', {
+                    method: 'POST',
+                    body: JSON.stringify(values),
+                });
+
+                setBranches((current) => [...current, payload.branch]);
+            }
+
+            setIsBranchModalOpen(false);
+            setEditingBranch(null);
+        } catch (error) {
+            setErrorMessage(error instanceof Error ? error.message : 'Unable to save branch.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleToggleStatus = async (branch: BranchRecord) => {
+        setOpenMenuId(null);
+        setErrorMessage('');
+        const nextStatus = branch.status === 'active' ? 'disabled' : 'active';
+
+        try {
+            const payload = await requestBranches<{ branch: BranchRecord }>(`/api/branches/${branch.id}`, {
+                method: 'PATCH',
+                body: JSON.stringify({ status: nextStatus }),
+            });
+
+            setBranches((current) =>
+                current.map((item) => item.id === payload.branch.id ? payload.branch : item)
+            );
+        } catch (error) {
+            setErrorMessage(error instanceof Error ? error.message : 'Unable to update branch status.');
+        }
+    };
+
+    const handleDeleteBranch = async () => {
+        if (!deleteState.branch) return;
+        setErrorMessage('');
+
+        try {
+            await requestBranches<{ success: boolean }>(`/api/branches/${deleteState.branch.id}`, {
+                method: 'DELETE',
+            });
+            setBranches((current) => current.filter((branch) => branch.id !== deleteState.branch?.id));
+        } catch (error) {
+            setErrorMessage(error instanceof Error ? error.message : 'Unable to delete branch.');
+        } finally {
+            setDeleteState({ isOpen: false, branch: null });
+        }
+    };
 
     return (
         <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
-            <div className="space-y-6">
-                <div className="flex justify-between items-center">
+            <div className="space-y-8">
+                <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Branches Management</h1>
-                        <p className="text-gray-600 dark:text-gray-400 mt-1">Manage all school branches and campuses</p>
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Branches Management</h1>
+                        <p className="mt-2 text-gray-600 dark:text-gray-400">Manage all school branches and campuses</p>
                     </div>
                     <button
-                        onClick={() => setIsModalOpen(true)}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
+                        onClick={openCreateModal}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-theme-sm transition hover:bg-blue-700"
                     >
-                        <Building2 className="w-4 h-4" />
+                        <Building2 className="h-5 w-5" />
                         Add Branch
                     </button>
                 </div>
 
-                <AddBranchModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+                {errorMessage && (
+                    <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">
+                        {errorMessage}
+                    </div>
+                )}
 
-                <ConfirmModal
-                    isOpen={isDeleteModalOpen}
-                    onClose={() => setIsDeleteModalOpen(false)}
-                    onConfirm={() => {
-                        console.log('Deleting branch:', branchToDelete);
-                        // Add deletion logic here
-                    }}
-                    title="Delete Branch"
-                    message="Are you sure you want to delete this branch? This action cannot be undone and will affect all students and teachers assigned to it."
+                <AddBranchModal
+                    isOpen={isBranchModalOpen}
+                    onClose={closeBranchModal}
+                    onSubmit={handleSaveBranch}
+                    branch={editingBranch}
+                    isSubmitting={isSubmitting}
                 />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {branches.map((branch) => (
-                        <div key={branch.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
-                            <div className="flex justify-between items-start mb-4">
-                                <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
-                                    <Building2 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                                </div>
-                                <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                                    <MoreHorizontal className="w-5 h-5" />
-                                </button>
-                            </div>
+                <ConfirmModal
+                    isOpen={deleteState.isOpen}
+                    onClose={() => setDeleteState({ isOpen: false, branch: null })}
+                    onConfirm={handleDeleteBranch}
+                    title="Delete Branch"
+                    message={`Are you sure you want to delete ${deleteState.branch?.name || 'this branch'}? This action cannot be undone.`}
+                    confirmText="Delete"
+                    variant="danger"
+                />
 
-                            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{branch.name}</h3>
+                {isLoading ? (
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        {[1, 2, 3].map((item) => (
+                            <div key={item} className="h-80 animate-pulse rounded-2xl bg-white shadow-theme-sm dark:bg-gray-800" />
+                        ))}
+                    </div>
+                ) : branches.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-12 text-center dark:border-gray-700 dark:bg-gray-800">
+                        <Building2 className="mx-auto h-12 w-12 text-gray-400" />
+                        <h2 className="mt-4 text-lg font-semibold text-gray-900 dark:text-white">No branches yet</h2>
+                        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Create your first branch to start managing campuses.</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        {branches.map((branch) => {
+                            const counts = getCounts(branch);
+                            const isDisabled = branch.status === 'disabled';
 
-                            <div className="space-y-3 mb-6">
-                                <div className="flex items-center text-gray-600 dark:text-gray-400 text-sm">
-                                    <MapPin className="w-4 h-4 mr-2" />
-                                    {branch.location}
-                                </div>
-                                <div className="flex items-center text-gray-600 dark:text-gray-400 text-sm">
-                                    <Phone className="w-4 h-4 mr-2" />
-                                    {branch.contact}
-                                </div>
-                                <div className="flex items-center text-gray-600 dark:text-gray-400 text-sm">
-                                    <Users className="w-4 h-4 mr-2" />
-                                    {branch.principal}
-                                </div>
-                            </div>
+                            return (
+                                <div
+                                    key={branch.id}
+                                    className={`relative rounded-2xl border bg-white p-6 shadow-theme-sm transition hover:-translate-y-1 hover:shadow-theme-lg dark:bg-gray-800 ${isDisabled ? 'border-gray-200 opacity-75 dark:border-gray-700' : 'border-gray-100 dark:border-gray-700'
+                                        }`}
+                                >
+                                    <div className="mb-7 flex items-start justify-between">
+                                        <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${isDisabled ? 'bg-gray-100 text-gray-500 dark:bg-gray-700' : 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400'
+                                            }`}>
+                                            <Building2 className="h-7 w-7" />
+                                        </div>
 
-                            <div className="border-t border-gray-100 dark:border-gray-700 pt-4 flex justify-between items-center">
-                                <div>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">Students</p>
-                                    <p className="font-semibold text-gray-900 dark:text-white">{branch.students}</p>
+                                        <div className="relative">
+                                            <button
+                                                onClick={() => setOpenMenuId((current) => current === branch.id ? null : branch.id)}
+                                                className="dropdown-toggle rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                                                aria-label={`Open ${branch.name} actions`}
+                                            >
+                                                <MoreHorizontal className="h-5 w-5" />
+                                            </button>
+                                            <Dropdown
+                                                isOpen={openMenuId === branch.id}
+                                                onClose={() => setOpenMenuId(null)}
+                                                className="w-48"
+                                            >
+                                                <DropdownItem onClick={() => openEditModal(branch)} className="flex items-center gap-2">
+                                                    <Edit3 className="h-4 w-4" />
+                                                    Edit Branch
+                                                </DropdownItem>
+                                                <DropdownItem onClick={() => handleToggleStatus(branch)} className="flex items-center gap-2">
+                                                    {isDisabled ? <Power className="h-4 w-4" /> : <PowerOff className="h-4 w-4" />}
+                                                    {isDisabled ? 'Enable Branch' : 'Disable Branch'}
+                                                </DropdownItem>
+                                                <DropdownItem
+                                                    onClick={() => {
+                                                        setOpenMenuId(null);
+                                                        setDeleteState({ isOpen: true, branch });
+                                                    }}
+                                                    className="flex items-center gap-2 text-red-600 hover:bg-red-50 hover:text-red-700"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                    Delete Branch
+                                                </DropdownItem>
+                                            </Dropdown>
+                                        </div>
+                                    </div>
+
+                                    <div className="mb-6">
+                                        <div className="mb-3 flex items-center gap-3">
+                                            <h3 className="text-xl font-bold text-gray-900 dark:text-white">{branch.name}</h3>
+                                            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${isDisabled ? 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300' : 'bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400'
+                                                }`}>
+                                                {isDisabled ? 'Disabled' : 'Active'}
+                                            </span>
+                                        </div>
+
+                                        <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
+                                            <div className="flex items-center gap-3">
+                                                <MapPin className="h-4 w-4 shrink-0" />
+                                                <span>{branch.address}</span>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <Phone className="h-4 w-4 shrink-0" />
+                                                <span>{branch.phone_number}</span>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <Users className="h-4 w-4 shrink-0" />
+                                                <span>{branch.principal_name || 'Principal not assigned'}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4 border-t border-gray-100 pt-5 dark:border-gray-700">
+                                        <div>
+                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Students</p>
+                                            <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{counts.students}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Teachers</p>
+                                            <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{counts.teachers}</p>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">Teachers</p>
-                                    <p className="font-semibold text-gray-900 dark:text-white">{branch.teachers}</p>
-                                </div>
-                                <span className="px-2 py-1 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-xs rounded-full font-medium">
-                                    {branch.status}
-                                </span>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
         </ProtectedRoute>
     );

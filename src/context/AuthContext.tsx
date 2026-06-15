@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 
 type UserRole = 'SUPER_ADMIN' | 'BRANCH_ADMIN' | 'TEACHER' | 'STUDENT' | 'PARENT';
 
@@ -27,50 +28,68 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         // Check for stored user session on mount
-        const initAuth = () => {
-            const storedUser = localStorage.getItem('user');
-            if (storedUser) {
-                setUser(JSON.parse(storedUser));
+        const initAuth = async () => {
+            const { data } = await supabase.auth.getSession();
+            const sessionUser = data.session?.user;
+
+            if (sessionUser) {
+                const role = sessionUser.app_metadata?.role as UserRole | undefined;
+
+                if (role) {
+                    const currentUser: User = {
+                        id: sessionUser.id,
+                        email: sessionUser.email || '',
+                        name: sessionUser.user_metadata?.name || sessionUser.email?.split('@')[0] || 'User',
+                        role,
+                    };
+                    setUser(currentUser);
+                    localStorage.setItem('user', JSON.stringify(currentUser));
+                }
+            } else {
+                localStorage.removeItem('user');
             }
+
             setIsLoading(false);
         };
 
-        initAuth();
+        void initAuth();
     }, []);
 
     const login = async (email: string, password: string, role: UserRole) => {
         setIsLoading(true);
 
-        const { getUsers } = await import('@/lib/api');
-        const users = getUsers();
-        const foundUser = users.find(u => u.email === email && u.role === role);
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+        });
 
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        if (foundUser) {
-            const user: User = {
-                id: foundUser.id,
-                email: foundUser.email,
-                name: foundUser.name || email.split('@')[0],
-                role: foundUser.role as UserRole, // explicit cast to match generic UserRole
-            };
-            setUser(user);
-            localStorage.setItem('user', JSON.stringify(user));
-        } else {
-            // Fallback for testing if user not in json
-            const mockUser: User = {
-                id: '1',
-                email,
-                name: email.split('@')[0],
-                role,
-            };
-            setUser(mockUser);
-            localStorage.setItem('user', JSON.stringify(mockUser));
+        if (error || !data.user) {
+            setIsLoading(false);
+            throw new Error(error?.message || 'Invalid login credentials.');
         }
+
+        const appRole = data.user.app_metadata?.role as UserRole | undefined;
+
+        if (!appRole || appRole !== role) {
+            await supabase.auth.signOut();
+            setIsLoading(false);
+            throw new Error('Selected role does not match this account.');
+        }
+
+        const currentUser: User = {
+            id: data.user.id,
+            email: data.user.email || email,
+            name: data.user.user_metadata?.name || email.split('@')[0],
+            role: appRole,
+        };
+
+        setUser(currentUser);
+        localStorage.setItem('user', JSON.stringify(currentUser));
         setIsLoading(false);
     };
 
     const logout = () => {
+        void supabase.auth.signOut();
         setUser(null);
         localStorage.removeItem('user');
     };

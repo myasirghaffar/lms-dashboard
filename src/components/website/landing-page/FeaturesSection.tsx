@@ -1,13 +1,13 @@
 import React from "react";
-import { User, Users, GraduationCap, Palette } from "lucide-react";
+import { Brain, HeartHandshake, Medal, Microscope, Palette, UserRoundCheck } from "lucide-react";
 
 const FeatureItem = ({ icon: Icon, title, description }: any) => (
-    <div className="flex flex-col items-center text-center space-y-4">
-        <div className="bg-gray-100 p-6 rounded-2xl text-[#0A4087] hover:bg-[#92257B] hover:text-white transition-all duration-300 cursor-pointer shadow-inner">
-            <Icon size={40} />
+    <div className="rounded-2xl border border-school-blue/10 bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-school-blue/10">
+        <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-school-blue text-white">
+            <Icon size={28} />
         </div>
-        <h3 className="font-bold text-[#0A4087] uppercase text-sm tracking-wide">{title}</h3>
-        <p className="text-xs text-gray-500 leading-relaxed max-w-[200px]">
+        <h3 className="mb-3 text-lg font-black text-school-ink">{title}</h3>
+        <p className="text-sm leading-6 text-gray-600">
             {description}
         </p>
     </div>
@@ -16,39 +16,49 @@ const FeatureItem = ({ icon: Icon, title, description }: any) => (
 const FeaturesSection = () => {
     const features = [
         {
-            icon: User,
+            icon: Brain,
+            title: "Concept Based Learning",
+            description: "Lessons are planned around understanding, practice, revision, and skill confidence.",
+        },
+        {
+            icon: UserRoundCheck,
             title: "Personality Development",
-            description: "The modern approach of personality development like ethics and social responsibility.",
+            description: "Students learn presentation, manners, teamwork, punctuality, and personal responsibility.",
         },
         {
-            icon: Users,
+            icon: HeartHandshake,
             title: "Teacher Training",
-            description: "Regular training of teachers to keep them updated with modern teaching techniques.",
+            description: "Teachers follow a consistent academic plan and improve through observation and feedback.",
         },
         {
-            icon: GraduationCap,
-            title: "Hifz Quran & Career",
-            description: "Specialized Hifz Quran program along with regular school subjects for career growth.",
+            icon: Microscope,
+            title: "Science & Computer Lab",
+            description: "Practical activities help students connect theory with observation and digital skills.",
         },
         {
             icon: Palette,
             title: "Co-Curricular Activities",
-            description: "Field trips, art competitions, sports, and other activities for holistic growth.",
+            description: "Sports, arts, speeches, quizzes, and events build confidence beyond textbooks.",
+        },
+        {
+            icon: Medal,
+            title: "Assessment Culture",
+            description: "Frequent tests and result analysis help teachers intervene before students fall behind.",
         },
     ];
 
     return (
-        <section className="py-20 bg-white">
+        <section className="bg-school-paper py-24">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="text-center mb-16">
-                    <h2 className="text-3xl font-extrabold text-[#0A4087] uppercase tracking-wide mb-4">
-                        Salient Features of AMS Talwandi Schools
+                <div className="mx-auto mb-14 max-w-3xl text-center">
+                    <p className="text-sm font-black uppercase tracking-[0.24em] text-school-magenta">Salient features</p>
+                    <h2 className="mt-3 text-3xl font-black text-school-blue md:text-4xl">
+                        Built for academic results and student confidence.
                     </h2>
-                    <p className="text-gray-500">Our mission is to achieve the goals for the world & hereafter.</p>
-                    <div className="w-20 h-1 bg-[#379962] mx-auto mt-4" />
+                    <p className="mt-4 text-gray-600">Our mission is to prepare students for the world ahead while keeping faith, manners, and discipline at the center.</p>
                 </div>
 
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-12">
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                     {features.map((feature, index) => (
                         <FeatureItem key={index} {...feature} />
                     ))}

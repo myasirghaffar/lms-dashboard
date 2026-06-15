@@ -1,49 +1,65 @@
 import React from "react";
 import Image from "next/image";
-import { Play } from "lucide-react";
+import { CheckCircle2, Play } from "lucide-react";
 
 const ExcellenceSection = () => {
-    return (
-        <section className="py-20 bg-white">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                <div className="mb-12">
-                    <Image
-                        src="/images/logo/logo.svg"
-                        alt="Logo"
-                        width={80}
-                        height={80}
-                        className="mx-auto mb-4"
-                    />
-                    <h2 className="text-3xl font-extrabold text-[#0A4087] mb-2 uppercase tracking-wide">
-                        Inspired by Excellence & Innovation
-                    </h2>
-                    <p className="text-gray-500">We offer a wide range of high quality of learning and extra-curricular activities.</p>
-                    <div className="w-40 h-1 bg-[#92257B] mx-auto mt-4" />
-                </div>
+    const points = [
+        "Qualified teachers with weekly lesson planning",
+        "Regular tests, result tracking, and parent feedback",
+        "Islamic values, manners, discipline, and confidence",
+        "Digital records for attendance, fees, classes, and exams",
+    ];
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                    <div className="text-left space-y-6">
-                        <h3 className="text-2xl font-bold text-[#0A4087] uppercase">Why Choose AMS Talwandi Schools?</h3>
-                        <p className="text-gray-600 leading-relaxed">
-                            We offer a unique combination of religious and contemporary education. Our focus is on character building and academic excellence. With state-of-the-art facilities and experienced educators, we ensure every child reaches their full potential.
+    return (
+        <section className="bg-white py-24">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:items-center">
+                    <div>
+                        <div className="mb-6 flex items-center gap-3">
+                            <Image
+                                src="/images/logo/logo.svg"
+                                alt="AMS Talwandi Logo"
+                                width={72}
+                                height={72}
+                                className="h-16 w-16 rounded-full object-contain"
+                            />
+                            <div>
+                                <p className="text-sm font-black uppercase tracking-[0.24em] text-school-magenta">Why choose us</p>
+                                <p className="font-bold text-school-green">Inspired by excellence and innovation</p>
+                            </div>
+                        </div>
+                        <h2 className="text-3xl font-black leading-tight text-school-blue md:text-5xl">
+                            A school where learning, values, and management work together.
+                        </h2>
+                        <p className="mt-6 text-base leading-8 text-gray-600">
+                            AMS Talwandi High School is designed for the full school journey: classroom teaching, assessment, co-curricular activities, student care, and reliable communication with parents.
                         </p>
-                        <p className="text-gray-600 leading-relaxed">
-                            Our curriculum is designed to foster critical thinking, creativity, and a strong sense of social responsibility. We believe in providing a holistic education that prepares students for the challenges of the modern world.
-                        </p>
+                        <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                            {points.map((point) => (
+                                <div key={point} className="flex gap-3 rounded-2xl bg-school-paper p-4">
+                                    <CheckCircle2 className="mt-0.5 shrink-0 text-school-green" size={20} />
+                                    <p className="text-sm font-semibold leading-6 text-school-ink">{point}</p>
+                                </div>
+                            ))}
+                        </div>
                     </div>
 
-                    <div className="relative group cursor-pointer overflow-hidden rounded-2xl shadow-2xl">
+                    <div className="group relative overflow-hidden rounded-[2rem] shadow-2xl shadow-school-blue/15">
                         <Image
-                            src="https://images.unsplash.com/photo-1577896851231-70ef18881757?q=80&w=2070&auto=format&fit=crop"
-                            alt="School Campus"
+                            src="/images/grid-image/image-04.png"
+                            alt="AMS Talwandi classroom"
                             width={600}
                             height={400}
-                            className="w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            className="h-[460px] w-full object-cover transition-transform duration-500 group-hover:scale-105"
                         />
-                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
-                            <div className="bg-[#92257B] p-6 rounded-full text-white shadow-xl animate-pulse">
+                        <div className="absolute inset-0 flex items-center justify-center bg-school-blue-deep/20 transition-colors group-hover:bg-school-blue-deep/35">
+                            <div className="rounded-full bg-school-magenta p-6 text-white shadow-xl">
                                 <Play fill="white" size={32} />
                             </div>
+                        </div>
+                        <div className="absolute bottom-5 left-5 right-5 rounded-2xl bg-white/92 p-5 backdrop-blur">
+                            <p className="text-sm font-black uppercase tracking-[0.2em] text-school-magenta">Campus life</p>
+                            <p className="mt-2 text-xl font-black text-school-blue">Structured classrooms, confident students, connected parents.</p>
                         </div>
                     </div>
                 </div>

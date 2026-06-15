@@ -76,11 +76,6 @@ const AppSidebar: React.FC = () => {
           name: "Finance",
           icon: <DollarSign className="w-5 h-5" />,
           path: "/dashboard/super-admin/finance/overview",
-        },
-        {
-          name: "Fees",
-          icon: <DollarSign className="w-5 h-5" />,
-          path: "/dashboard/fees",
         }
       );
     }
@@ -292,7 +287,7 @@ const AppSidebar: React.FC = () => {
   const renderMenuItems = (navItems: NavItem[], menuType: "main" | "others") => (
     <ul className="flex flex-col gap-4">
       {navItems.map((nav, index) => (
-        <li key={nav.name}>
+        <li key={`${menuType}-${nav.path || nav.name}-${index}`}>
           {nav.subItems ? (
             <button
               onClick={() => handleSubmenuToggle(index, menuType)}
@@ -361,7 +356,7 @@ const AppSidebar: React.FC = () => {
             >
               <ul className="mt-2 space-y-1 ml-9">
                 {nav.subItems.map((subItem) => (
-                  <li key={subItem.name}>
+                  <li key={`${menuType}-${nav.name}-${subItem.path}`}>
                     <Link
                       href={subItem.path}
                       className={`menu-dropdown-item ${isActive(subItem.path)
@@ -408,25 +403,25 @@ const AppSidebar: React.FC = () => {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div
-        className={`py-8 hidden lg:flex ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
+        className={`py-8 hidden lg:flex ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-center"
           }`}
       >
-        <Link href="/">
+        <Link href="/" className="flex w-full justify-center">
           {isExpanded || isHovered || isMobileOpen ? (
             <>
               <Image
-                className="dark:hidden"
+                className="h-28 w-28 object-contain dark:hidden"
                 src="/images/logo/logo.svg"
                 alt="Logo"
-                width={150}
-                height={40}
+                width={112}
+                height={112}
               />
               <Image
-                className="hidden dark:block"
+                className="hidden h-28 w-28 object-contain dark:block"
                 src="/images/logo/logo-dark.svg"
                 alt="Logo"
-                width={150}
-                height={40}
+                width={112}
+                height={112}
               />
             </>
           ) : (

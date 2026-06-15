@@ -1,13 +1,13 @@
 import React from "react";
-import { UserPlus, Star, Network, BookOpen, Handshake } from "lucide-react";
+import { BookOpen, CalendarCheck, ClipboardCheck, GraduationCap, MonitorCheck } from "lucide-react";
 
-const InfoItem = ({ icon: Icon, title, description, color }: any) => (
-    <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center text-center group hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
-        <div className={`p-4 rounded-full mb-6 text-white group-hover:scale-110 transition-transform`} style={{ backgroundColor: color }}>
-            <Icon size={32} />
+const InfoItem = ({ icon: Icon, title, description, accent }: any) => (
+    <div className="group rounded-2xl border border-school-blue/10 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-school-blue/10">
+        <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl text-white transition-transform group-hover:scale-105" style={{ backgroundColor: accent }}>
+            <Icon size={26} />
         </div>
-        <h3 className="text-xl font-bold text-[#0A4087] mb-4 uppercase">{title}</h3>
-        <p className="text-sm text-gray-500 leading-relaxed">
+        <h3 className="mb-3 text-lg font-black text-school-ink">{title}</h3>
+        <p className="text-sm leading-6 text-gray-600">
             {description}
         </p>
     </div>
@@ -16,41 +16,47 @@ const InfoItem = ({ icon: Icon, title, description, color }: any) => (
 const InfoGrid = () => {
     const items = [
         {
-            icon: UserPlus,
-            title: "Admission Procedure",
-            description: "Step-by-step guide for new admissions. Find documents needed for primary and secondary school entries.",
-            color: "#92257B",
+            icon: ClipboardCheck,
+            title: "Transparent Admissions",
+            description: "A clear process for enquiries, admission tests, required documents, and class placement.",
+            accent: "#92257B",
         },
         {
-            icon: Star,
-            title: "Salient Features",
-            description: "What makes us unique. Our focus on Islamic values and modern education excellence sets us apart.",
-            color: "#0A4087",
+            icon: GraduationCap,
+            title: "Academic Discipline",
+            description: "Daily routines, term targets, homework, and assessments are organized for measurable progress.",
+            accent: "#0A4087",
         },
         {
-            icon: Network,
-            title: "Branch Network",
-            description: "Explore our wide network of over 700 branches across 150+ cities in Pakistan.",
-            color: "#379962",
+            icon: MonitorCheck,
+            title: "LMS Connected",
+            description: "Attendance, fees, results, announcements, and communication are handled from one dashboard.",
+            accent: "#379962",
         },
         {
             icon: BookOpen,
-            title: "Education Curriculum",
-            description: "Our comprehensive curriculum designed to provide balanced education for all grades.",
-            color: "#92257B",
+            title: "Balanced Curriculum",
+            description: "English, Urdu, science, math, Islamiyat, computer learning, activities, and character building.",
+            accent: "#92257B",
         },
         {
-            icon: Handshake,
-            title: "Franchise Offer",
-            description: "Become a partner in spreading quality education. Join our growing franchise network.",
-            color: "#0A4087",
+            icon: CalendarCheck,
+            title: "Parent Updates",
+            description: "Parents receive school notices, performance updates, attendance status, and event information.",
+            accent: "#0A4087",
         },
     ];
 
     return (
-        <section className="py-20 bg-gray-50">
+        <section className="bg-school-paper py-20">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-8">
+                <div className="mb-12 max-w-3xl">
+                    <p className="text-sm font-black uppercase tracking-[0.24em] text-school-green">School system</p>
+                    <h2 className="mt-3 text-3xl font-black text-school-blue md:text-4xl">
+                        Everything families expect from a professional school.
+                    </h2>
+                </div>
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-3 lg:grid-cols-5">
                     {items.map((item, index) => (
                         <InfoItem key={index} {...item} />
                     ))}

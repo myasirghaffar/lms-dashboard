@@ -1,32 +1,44 @@
 import React from "react";
+import { ArrowRight } from "lucide-react";
 
 const JoinSection = () => {
     return (
-        <section className="py-20 bg-[#0A4087] text-white">
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                <h2 className="text-3xl font-extrabold mb-4 uppercase tracking-wide">
-                    Join Over <span className="text-yellow-300">200,000 Students</span> Enjoying AMS Talwandi School Now
-                </h2>
-                <p className="text-yellow-300 mb-12 font-bold">Become a Part of AMS Talwandi schools Network near Your Homes.</p>
+        <section className="bg-school-blue py-24 text-white">
+            <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8 lg:items-center">
+                <div>
+                    <p className="text-sm font-black uppercase tracking-[0.24em] text-school-gold">Admission enquiry</p>
+                    <h2 className="mt-3 text-3xl font-black md:text-5xl">
+                        Give your child a school experience parents can trust.
+                    </h2>
+                    <p className="mt-5 leading-8 text-white/75">
+                        Share basic details and the school office can guide you about class availability, admission requirements, fee structure, and campus visit timing.
+                    </p>
+                </div>
 
-                <form className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <form className="grid gap-4 rounded-3xl border border-white/15 bg-white p-5 shadow-2xl shadow-black/15 md:grid-cols-2">
                     <input
                         type="text"
-                        placeholder="Name"
-                        className="bg-white text-gray-900 rounded px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#92257B]"
+                        placeholder="Student name"
+                        className="rounded-2xl border border-school-blue/10 bg-school-paper px-4 py-3 text-school-ink outline-none focus:border-school-magenta"
                     />
                     <input
-                        type="email"
-                        placeholder="Email"
-                        className="bg-white text-gray-900 rounded px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#92257B]"
+                        type="text"
+                        placeholder="Class applying for"
+                        className="rounded-2xl border border-school-blue/10 bg-school-paper px-4 py-3 text-school-ink outline-none focus:border-school-magenta"
                     />
                     <input
                         type="tel"
-                        placeholder="Phone"
-                        className="bg-white text-gray-900 rounded px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#92257B]"
+                        placeholder="Parent phone"
+                        className="rounded-2xl border border-school-blue/10 bg-school-paper px-4 py-3 text-school-ink outline-none focus:border-school-magenta"
                     />
-                    <button className="bg-yellow-300 hover:bg-yellow-400 text-black font-bold py-3 px-8 rounded transition-colors uppercase shadow-lg">
-                        Sign Up
+                    <input
+                        type="text"
+                        placeholder="Area / village"
+                        className="rounded-2xl border border-school-blue/10 bg-school-paper px-4 py-3 text-school-ink outline-none focus:border-school-magenta"
+                    />
+                    <button className="inline-flex items-center justify-center gap-2 rounded-2xl bg-school-magenta px-8 py-3 font-black text-white transition-colors hover:bg-school-magenta-deep md:col-span-2">
+                        Request Admission Call
+                        <ArrowRight size={18} />
                     </button>
                 </form>
             </div>
