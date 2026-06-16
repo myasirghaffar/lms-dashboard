@@ -1,113 +1,98 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import PageBreadcrumb from '@/components/common/PageBreadCrumb';
 import FeeSlipPreview from '@/components/fees/FeeSlipPreview';
-import studentsData from '@/data/students.json';
-import { FeeLineItem, FeeParticularId, FeeStudent } from '@/types/fees';
-import { useAuth } from '@/context/AuthContext';
+import { requestDashboardApi } from '@/lib/dashboardApi';
+import type { FeeChallanRecord } from '@/types/fees';
 
-const buildItemsForStudent = (student: FeeStudent | null): FeeLineItem[] => [
-  { id: 'MONTHLY_FEE', label: 'Monthly Fee', amount: student?.monthlyFee ?? 0 },
-  { id: 'ADMISSION_FEE', label: 'Admission Fee', amount: 0 },
-  { id: 'EXTRA_COACHING_FEE', label: 'Extra Coaching Fee', amount: 0 },
-  { id: 'REGISTRATION_FEE', label: 'Registration Fee', amount: 0 },
-  { id: 'PAPER_FUND', label: 'Paper Fund', amount: 0 },
-  { id: 'BOOKS', label: 'Books', amount: 0 },
-  { id: 'UNIFORM', label: 'Uniform', amount: 0 },
-  { id: 'FINE', label: 'Fine', amount: 0 },
-  { id: 'OTHERS', label: 'Others', amount: 0 },
-  { id: 'PREVIOUS_BALANCE', label: 'Previous Balance', amount: student?.previousBalance ?? 0 },
-  { id: 'DISCOUNT', label: 'Discount', amount: 0 },
-];
+type ChallansResponse = { challans: FeeChallanRecord[] };
 
 export default function StudentFeesPage() {
-  const { user } = useAuth();
-  const feeStudents = studentsData as unknown as FeeStudent[];
+  const [challans, setChallans] = useState<FeeChallanRecord[]>([]);
+  const [selectedChallanId, setSelectedChallanId] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
-  const myStudent = useMemo(() => {
-    if (!user) return null;
-    const linked = feeStudents.find((s) => s.userId === user.id);
-    return linked ?? null;
-  }, [feeStudents, user]);
+  useEffect(() => {
+    let mounted = true;
 
-  const items = useMemo(
-    () => buildItemsForStudent(myStudent),
-    [myStudent],
-  );
+    const loadChallans = async () => {
+      setIsLoading(true);
+      setErrorMessage('');
+      try {
+        const payload = await requestDashboardApi<ChallansResponse>('/api/fee-challans');
+        if (!mounted) return;
+        setChallans(payload.challans);
+        setSelectedChallanId(payload.challans[0]?.id || null);
+      } catch (error) {
+        if (!mounted) return;
+        setErrorMessage(error instanceof Error ? error.message : 'Unable to load fee challans.');
+      } finally {
+        if (mounted) setIsLoading(false);
+      }
+    };
 
-  const total = useMemo(
-    () =>
-      items.reduce((sum, item) => {
-        if (item.id === ('DISCOUNT' as FeeParticularId)) {
-          return sum - Math.max(0, item.amount);
-        }
-        return sum + Math.max(0, item.amount);
-      }, 0),
-    [items],
-  );
+    void loadChallans();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
-  const deposit = 0;
-  const due = Math.max(0, total - deposit);
+  const selectedChallan = challans.find((challan) => challan.id === selectedChallanId) || challans[0] || null;
 
   return (
     <ProtectedRoute allowedRoles={['STUDENT']}>
       <div className="space-y-6">
         <PageBreadcrumb pageTitle="My Fee Challan" />
 
-        {!myStudent ? (
-          <div className="rounded-2xl border border-dashed border-gray-200 bg-purple-50/40 px-4 py-6 text-sm text-gray-600 shadow-sm dark:border-gray-700 dark:bg-purple-950/20 dark:text-gray-300">
-            No fee profile is linked to your account yet. Please contact the school administrator.
+        {isLoading ? (
+          <div className="rounded-lg border border-gray-200 bg-white px-4 py-5 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+            Loading your linked fee challans...
+          </div>
+        ) : errorMessage ? (
+          <div className="rounded-lg border border-rose-100 bg-rose-50 px-4 py-5 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-300">
+            {errorMessage}
+          </div>
+        ) : !challans.length ? (
+          <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-5 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+            No fee challan is linked to your account yet. Please contact the school office.
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <div className="space-y-4 lg:col-span-2">
-              <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4 shadow-sm dark:border-gray-800 dark:bg-gray-900/60">
-                <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                  Current Fee Status
-                </h3>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  Review your latest fee challan. You can print or download it for record keeping.
-                </p>
-                <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-gray-400">
-                      Student
-                    </p>
-                    <p className="mt-1 font-medium text-gray-900 dark:text-white">
-                      {myStudent.name}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Reg ID: <span className="font-mono">{myStudent.id}</span>
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-gray-400">
-                      Status
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-rose-600 dark:text-rose-400">
-                      Rs. {due.toLocaleString()} Due
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Total payable: Rs. {Math.max(0, total).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              </div>
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              {challans.map((challan) => (
+                <button
+                  key={challan.id}
+                  type="button"
+                  onClick={() => setSelectedChallanId(challan.id)}
+                  className={`rounded-lg border px-3 py-2 text-left text-xs ${
+                    challan.id === selectedChallan?.id
+                      ? 'border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-950/30 dark:text-brand-300'
+                      : 'border-gray-200 bg-white text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300'
+                  }`}
+                >
+                  <span className="block font-semibold">{challan.fee_month}</span>
+                  <span>{challan.challan_number}</span>
+                </button>
+              ))}
             </div>
 
-            <div className="lg:col-span-3">
+            {selectedChallan && (
               <FeeSlipPreview
-                student={myStudent}
-                month="Current Month"
-                date={new Date().toISOString().slice(0, 10)}
-                items={items}
-                total={total}
-                deposit={deposit}
-                due={due}
+                challan={selectedChallan}
+                student={selectedChallan.student}
+                month={selectedChallan.fee_month}
+                date={selectedChallan.issue_date}
+                dueDate={selectedChallan.due_date}
+                validityDate={selectedChallan.validity_date}
+                items={selectedChallan.items}
+                total={selectedChallan.total_amount}
+                deposit={selectedChallan.deposit_amount}
+                due={selectedChallan.due_amount}
               />
-            </div>
+            )}
           </div>
         )}
       </div>

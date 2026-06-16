@@ -5,6 +5,13 @@ export interface FeeStudent {
   name: string;
   fatherName: string;
   class: string;
+  rollNumber?: string;
+  branchId?: string | null;
+  branchName?: string | null;
+  branchAddress?: string | null;
+  branchPhone?: string | null;
+  branchEmail?: string | null;
+  parentName?: string | null;
   previousBalance: number;
   monthlyFee: number;
 }
@@ -31,7 +38,46 @@ export interface FeeLineItem {
 export interface FeeFormValues {
   month: string;
   date: string; // ISO format YYYY-MM-DD
+  dueDate: string;
+  validityDate: string;
   items: FeeLineItem[];
   deposit: number;
 }
 
+export interface FeeChallanRecord {
+  id: string;
+  challan_number: string;
+  student_id: string;
+  parent_profile_id: string | null;
+  branch_id: string | null;
+  class_id: string | null;
+  fee_month: string;
+  issue_date: string;
+  due_date: string;
+  validity_date: string;
+  subtotal: number;
+  discount_amount: number;
+  deposit_amount: number;
+  total_amount: number;
+  due_amount: number;
+  late_fee_amount: number;
+  payable_after_due_date: number;
+  status: 'draft' | 'issued' | 'paid' | 'cancelled' | 'overdue';
+  notes: string;
+  created_by_profile_id: string | null;
+  created_at: string;
+  updated_at: string;
+  student: FeeStudent;
+  items: FeeLineItem[];
+}
+
+export interface FeeChallanPayload {
+  student_ids: string[];
+  fee_month: string;
+  issue_date: string;
+  due_date: string;
+  validity_date: string;
+  items: FeeLineItem[];
+  deposit_amount: number;
+  notes?: string;
+}

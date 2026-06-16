@@ -75,7 +75,7 @@ This project converts a modern dashboard UI into a fully functional School LMS. 
     npm run dev
     ```
 
-    Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+    Open [http://localhost:5400](http://localhost:5400) with your browser to see the result.
 
 ## 📁 Project Structure
 

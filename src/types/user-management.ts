@@ -37,6 +37,9 @@ export interface StudentManagementRecord {
     parent_profile_id: string | null;
     branch_id: string | null;
     branch_name: string | null;
+    branch_address?: string | null;
+    branch_phone_number?: string | null;
+    branch_email?: string | null;
     class_id: string | null;
     class_name: string | null;
     roll_number: string;

@@ -1,164 +1,132 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import PageBreadcrumb from '@/components/common/PageBreadCrumb';
 import FeeSlipPreview from '@/components/fees/FeeSlipPreview';
-import studentsData from '@/data/students.json';
-import { FeeLineItem, FeeParticularId, FeeStudent } from '@/types/fees';
-import { useAuth } from '@/context/AuthContext';
+import { requestDashboardApi } from '@/lib/dashboardApi';
+import type { FeeChallanRecord } from '@/types/fees';
 
-const buildItemsForStudent = (student: FeeStudent | null): FeeLineItem[] => [
-  { id: 'MONTHLY_FEE', label: 'Monthly Fee', amount: student?.monthlyFee ?? 0 },
-  { id: 'ADMISSION_FEE', label: 'Admission Fee', amount: 0 },
-  { id: 'EXTRA_COACHING_FEE', label: 'Extra Coaching Fee', amount: 0 },
-  { id: 'REGISTRATION_FEE', label: 'Registration Fee', amount: 0 },
-  { id: 'PAPER_FUND', label: 'Paper Fund', amount: 0 },
-  { id: 'BOOKS', label: 'Books', amount: 0 },
-  { id: 'UNIFORM', label: 'Uniform', amount: 0 },
-  { id: 'FINE', label: 'Fine', amount: 0 },
-  { id: 'OTHERS', label: 'Others', amount: 0 },
-  { id: 'PREVIOUS_BALANCE', label: 'Previous Balance', amount: student?.previousBalance ?? 0 },
-  { id: 'DISCOUNT', label: 'Discount', amount: 0 },
-];
+type ChallansResponse = { challans: FeeChallanRecord[] };
 
 export default function ParentFeesPage() {
-  const { user } = useAuth();
-  const feeStudents = studentsData as unknown as FeeStudent[];
+  const [challans, setChallans] = useState<FeeChallanRecord[]>([]);
+  const [selectedChallanId, setSelectedChallanId] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
-  const myChildren = useMemo(() => {
-    if (!user) return [];
-    return feeStudents.filter((s) => s.parentId === user.id);
-  }, [feeStudents, user]);
+  useEffect(() => {
+    let mounted = true;
 
-  const [selectedChildId, setSelectedChildId] = useState<string | null>(
-    myChildren[0]?.id ?? null,
-  );
+    const loadChallans = async () => {
+      setIsLoading(true);
+      setErrorMessage('');
+      try {
+        const payload = await requestDashboardApi<ChallansResponse>('/api/fee-challans');
+        if (!mounted) return;
+        setChallans(payload.challans);
+        setSelectedChallanId(payload.challans[0]?.id || null);
+      } catch (error) {
+        if (!mounted) return;
+        setErrorMessage(error instanceof Error ? error.message : 'Unable to load fee challans.');
+      } finally {
+        if (mounted) setIsLoading(false);
+      }
+    };
 
-  const selectedChild = useMemo(
-    () => myChildren.find((c) => c.id === selectedChildId) ?? myChildren[0] ?? null,
-    [myChildren, selectedChildId],
-  );
+    void loadChallans();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
-  const items = useMemo(
-    () => buildItemsForStudent(selectedChild),
-    [selectedChild],
-  );
+  const selectedChallan = challans.find((challan) => challan.id === selectedChallanId) || challans[0] || null;
 
-  const total = useMemo(
-    () =>
-      items.reduce((sum, item) => {
-        if (item.id === ('DISCOUNT' as FeeParticularId)) {
-          return sum - Math.max(0, item.amount);
-        }
-        return sum + Math.max(0, item.amount);
-      }, 0),
-    [items],
-  );
-
-  const deposit = 0;
-  const due = Math.max(0, total - deposit);
-
-  const combinedTotal = useMemo(
-    () =>
-      myChildren.reduce(
-        (acc, child) =>
-          acc + Math.max(0, child.monthlyFee + child.previousBalance),
-        0,
-      ),
-    [myChildren],
-  );
+  const childSummaries = useMemo(() => {
+    const summaries = new Map<string, { name: string; total: number; count: number }>();
+    challans.forEach((challan) => {
+      const current = summaries.get(challan.student.id) || {
+        name: challan.student.name,
+        total: 0,
+        count: 0,
+      };
+      current.total += challan.due_amount;
+      current.count += 1;
+      summaries.set(challan.student.id, current);
+    });
+    return [...summaries.entries()];
+  }, [challans]);
 
   return (
     <ProtectedRoute allowedRoles={['PARENT']}>
       <div className="space-y-6">
         <PageBreadcrumb pageTitle="Children Fee Status" />
 
-        {!myChildren.length ? (
-          <div className="rounded-2xl border border-dashed border-gray-200 bg-purple-50/40 px-4 py-6 text-sm text-gray-600 shadow-sm dark:border-gray-700 dark:bg-purple-950/20 dark:text-gray-300">
-            No children are linked to your account yet. Please contact the school administrator.
+        {isLoading ? (
+          <div className="rounded-lg border border-gray-200 bg-white px-4 py-5 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+            Loading linked children fee challans...
+          </div>
+        ) : errorMessage ? (
+          <div className="rounded-lg border border-rose-100 bg-rose-50 px-4 py-5 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-300">
+            {errorMessage}
+          </div>
+        ) : !challans.length ? (
+          <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-5 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+            No challans are linked to your children yet. Please contact the school office.
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-            <div className="space-y-4 xl:col-span-2">
-              <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4 shadow-sm dark:border-gray-800 dark:bg-gray-900/60">
-                <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                  Children Overview
-                </h3>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  Select a child to preview their fee challan. You can print or download slips for record.
-                </p>
-
-                <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
-                  {myChildren.map((child) => {
-                    const childItems = buildItemsForStudent(child);
-                    const childTotal = childItems.reduce((sum, item) => {
-                      if (item.id === ('DISCOUNT' as FeeParticularId)) {
-                        return sum - Math.max(0, item.amount);
-                      }
-                      return sum + Math.max(0, item.amount);
-                    }, 0);
-
-                    const childDue = childTotal;
-
-                    const isActive = child.id === selectedChild?.id;
-
-                    return (
-                      <button
-                        key={child.id}
-                        type="button"
-                        onClick={() => setSelectedChildId(child.id)}
-                        className={`flex flex-col items-start rounded-2xl border px-4 py-3 text-left text-sm transition ${
-                          isActive
-                            ? 'border-purple-500 bg-purple-50 shadow-sm dark:border-purple-500 dark:bg-purple-950/40'
-                            : 'border-gray-200 bg-white hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900/60 dark:hover:bg-gray-900'
-                        }`}
-                      >
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                          {child.name}
-                        </p>
-                        <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                          Reg ID: <span className="font-mono">{child.id}</span>
-                        </p>
-                        <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                          Class: {child.class}
-                        </p>
-                        <p className="mt-1 text-xs font-medium text-rose-600 dark:text-rose-400">
-                          Due: Rs. {childDue.toLocaleString()}
-                        </p>
-                      </button>
-                    );
-                  })}
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[320px_1fr]">
+            <div className="space-y-4">
+              <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">Children Overview</p>
+                <div className="mt-3 space-y-2">
+                  {childSummaries.map(([studentId, summary]) => (
+                    <div key={studentId} className="rounded-lg bg-gray-50 px-3 py-2 text-sm dark:bg-gray-800">
+                      <p className="font-medium text-gray-900 dark:text-white">{summary.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {summary.count} challan{summary.count === 1 ? '' : 's'} · Rs. {summary.total.toLocaleString()} due
+                      </p>
+                    </div>
+                  ))}
                 </div>
+              </div>
 
-                <div className="mt-4 rounded-xl bg-purple-50/60 px-4 py-3 text-sm text-gray-700 dark:bg-purple-950/30 dark:text-gray-200">
-                  <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                    Combined Monthly Payable
-                  </p>
-                  <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-white">
-                    Rs. {combinedTotal.toLocaleString()}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    This is a simple combined view of current month fee plus previous balances
-                    for all linked children.
-                  </p>
+              <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">Challans</p>
+                <div className="mt-3 space-y-2">
+                  {challans.map((challan) => (
+                    <button
+                      key={challan.id}
+                      type="button"
+                      onClick={() => setSelectedChallanId(challan.id)}
+                      className={`w-full rounded-lg border px-3 py-2 text-left text-xs ${
+                        challan.id === selectedChallan?.id
+                          ? 'border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-950/30 dark:text-brand-300'
+                          : 'border-gray-200 bg-white text-gray-700 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300'
+                      }`}
+                    >
+                      <span className="block font-semibold">{challan.student.name}</span>
+                      <span>{challan.fee_month} · {challan.challan_number}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
 
-            <div className="xl:col-span-1">
-              {selectedChild && (
-                <FeeSlipPreview
-                  student={selectedChild}
-                  month="Current Month"
-                  date={new Date().toISOString().slice(0, 10)}
-                  items={items}
-                  total={total}
-                  deposit={deposit}
-                  due={due}
-                />
-              )}
-            </div>
+            {selectedChallan && (
+              <FeeSlipPreview
+                challan={selectedChallan}
+                student={selectedChallan.student}
+                month={selectedChallan.fee_month}
+                date={selectedChallan.issue_date}
+                dueDate={selectedChallan.due_date}
+                validityDate={selectedChallan.validity_date}
+                items={selectedChallan.items}
+                total={selectedChallan.total_amount}
+                deposit={selectedChallan.deposit_amount}
+                due={selectedChallan.due_amount}
+              />
+            )}
           </div>
         )}
       </div>

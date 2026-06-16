@@ -2,7 +2,7 @@
 export const env = {
     DATABASE_URL: process.env.DATABASE_URL || '',
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || '',
-    NEXTAUTH_URL: process.env.NEXTAUTH_URL || 'http://localhost:3000',
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL || 'http://localhost:5400',
 
     // SMS Configuration (for attendance alerts)
     SMS_API_KEY: process.env.SMS_API_KEY || '',
@@ -17,7 +17,7 @@ export const env = {
 
     // App Configuration
     APP_NAME: process.env.APP_NAME || 'School LMS',
-    APP_URL: process.env.APP_URL || 'http://localhost:3000',
+    APP_URL: process.env.APP_URL || 'http://localhost:5400',
 
     // Node Environment
     NODE_ENV: process.env.NODE_ENV || 'development',

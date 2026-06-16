@@ -5,133 +5,89 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import ComponentCard from "@/components/common/ComponentCard";
 import DatePicker from "@/components/form/date-picker";
+import Button from "@/components/ui/button/Button";
 import StudentSearch from "@/components/fees/StudentSearch";
 import StudentInfoCard from "@/components/fees/StudentInfoCard";
 import FeesTable from "@/components/fees/FeesTable";
 import FeesSummary from "@/components/fees/FeesSummary";
 import FeeSlipPreview from "@/components/fees/FeeSlipPreview";
-import studentsData from "@/data/students.json";
+import { requestDashboardApi } from "@/lib/dashboardApi";
+import { buildItemsForStudent, calculateFeeTotals, getDefaultFeeDates, MONTH_OPTIONS, toFeeStudent } from "@/lib/fees";
 import {
+  FeeChallanRecord,
   FeeFormValues,
-  FeeLineItem,
   FeeParticularId,
   FeeStudent,
 } from "@/types/fees";
+import type { StudentManagementRecord } from "@/types/user-management";
 
-const feeStudents = studentsData as unknown as FeeStudent[];
-
-const MONTH_OPTIONS: string[] = [
-  "January 2025",
-  "February 2025",
-  "March 2025",
-  "April 2025",
-  "May 2025",
-  "June 2025",
-  "July 2025",
-  "August 2025",
-  "September 2025",
-  "October 2025",
-  "November 2025",
-  "December 2025",
-];
-
-const buildInitialItems = (student: FeeStudent | null): FeeLineItem[] => [
-  {
-    id: "MONTHLY_FEE",
-    label: "Monthly Fee",
-    amount: student?.monthlyFee ?? 0,
-  },
-  {
-    id: "ADMISSION_FEE",
-    label: "Admission Fee",
-    amount: 0,
-  },
-  {
-    id: "EXTRA_COACHING_FEE",
-    label: "Extra Coaching Fee",
-    amount: 0,
-  },
-  {
-    id: "REGISTRATION_FEE",
-    label: "Registration Fee",
-    amount: 0,
-  },
-  {
-    id: "PAPER_FUND",
-    label: "Paper Fund",
-    amount: 0,
-  },
-  {
-    id: "BOOKS",
-    label: "Books",
-    amount: 0,
-  },
-  {
-    id: "UNIFORM",
-    label: "Uniform",
-    amount: 0,
-  },
-  {
-    id: "FINE",
-    label: "Fine",
-    amount: 0,
-  },
-  {
-    id: "OTHERS",
-    label: "Others",
-    amount: 0,
-  },
-  {
-    id: "PREVIOUS_BALANCE",
-    label: "Previous Balance",
-    amount: student?.previousBalance ?? 0,
-  },
-  {
-    id: "DISCOUNT",
-    label: "Discount",
-    amount: 0,
-  },
-];
+type StudentsResponse = { students: StudentManagementRecord[] };
+type ChallansResponse = { challans: FeeChallanRecord[] };
 
 const buildInitialFormValues = (student: FeeStudent | null): FeeFormValues => {
-  const today = new Date();
-  const isoDate = today.toISOString().slice(0, 10);
+  const dates = getDefaultFeeDates();
 
   return {
-    month: MONTH_OPTIONS[0],
-    date: isoDate,
-    items: buildInitialItems(student),
+    month: MONTH_OPTIONS[new Date().getMonth()] || MONTH_OPTIONS[0],
+    date: dates.issueDate,
+    dueDate: dates.dueDate,
+    validityDate: dates.validityDate,
+    items: buildItemsForStudent(student),
     deposit: 0,
   };
 };
 
 export default function FeesModulePage() {
+  const [feeStudents, setFeeStudents] = useState<FeeStudent[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<FeeStudent | null>(
     null,
   );
+  const [createdChallans, setCreatedChallans] = useState<FeeChallanRecord[]>([]);
+  const [statusMessage, setStatusMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isLoadingStudents, setIsLoadingStudents] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [createForFamily, setCreateForFamily] = useState(false);
   const [formValues, setFormValues] = useState<FeeFormValues>(() =>
     buildInitialFormValues(null),
   );
 
   useEffect(() => {
+    let mounted = true;
+
+    const loadStudents = async () => {
+      setIsLoadingStudents(true);
+      setErrorMessage("");
+      try {
+        const payload = await requestDashboardApi<StudentsResponse>('/api/students');
+        if (!mounted) return;
+        setFeeStudents(payload.students.map(toFeeStudent));
+      } catch (error) {
+        if (!mounted) return;
+        setErrorMessage(error instanceof Error ? error.message : 'Unable to load students.');
+      } finally {
+        if (mounted) setIsLoadingStudents(false);
+      }
+    };
+
+    void loadStudents();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
     setFormValues(buildInitialFormValues(selectedStudent));
+    setCreatedChallans([]);
   }, [selectedStudent]);
 
-  const total = useMemo(
-    () =>
-      formValues.items.reduce((sum, item) => {
-        if (item.id === "DISCOUNT") {
-          return sum - Math.max(0, item.amount);
-        }
-        return sum + Math.max(0, item.amount);
-      }, 0),
-    [formValues.items],
-  );
+  const totals = useMemo(() => calculateFeeTotals(formValues.items, formValues.deposit), [formValues.items, formValues.deposit]);
+  const familyStudents = useMemo(() => {
+    if (!selectedStudent?.parentId) return selectedStudent ? [selectedStudent] : [];
+    return feeStudents.filter((student) => student.parentId === selectedStudent.parentId);
+  }, [feeStudents, selectedStudent]);
 
-  const due = useMemo(
-    () => Math.max(0, total - Math.max(0, formValues.deposit)),
-    [total, formValues.deposit],
-  );
+  const selectedStudentsForCreation = createForFamily ? familyStudents : selectedStudent ? [selectedStudent] : [];
 
   const handleItemAmountChange = (id: FeeParticularId, amount: number) => {
     setFormValues((prev) => ({
@@ -168,8 +124,50 @@ export default function FeesModulePage() {
     setFormValues(buildInitialFormValues(selectedStudent));
   };
 
+  const handleDueDateChange = (_selectedDates: Date[], dateStr: string) => {
+    if (!dateStr) return;
+    setFormValues((prev) => ({ ...prev, dueDate: dateStr }));
+  };
+
+  const handleValidityDateChange = (_selectedDates: Date[], dateStr: string) => {
+    if (!dateStr) return;
+    setFormValues((prev) => ({ ...prev, validityDate: dateStr }));
+  };
+
+  const handleCreateChallan = async () => {
+    if (!selectedStudentsForCreation.length) {
+      setErrorMessage('Select a student first.');
+      return;
+    }
+
+    setIsSaving(true);
+    setErrorMessage("");
+    setStatusMessage("");
+
+    try {
+      const payload = await requestDashboardApi<ChallansResponse>('/api/fee-challans', {
+        method: 'POST',
+        body: JSON.stringify({
+          student_ids: selectedStudentsForCreation.map((student) => student.id),
+          fee_month: formValues.month,
+          issue_date: formValues.date,
+          due_date: formValues.dueDate,
+          validity_date: formValues.validityDate,
+          items: formValues.items,
+          deposit_amount: formValues.deposit,
+        }),
+      });
+      setCreatedChallans(payload.challans);
+      setStatusMessage(`${payload.challans.length} challan${payload.challans.length === 1 ? '' : 's'} created.`);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Unable to create challan.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
-    <ProtectedRoute allowedRoles={["SUPER_ADMIN", "BRANCH_ADMIN", "PARENT"]}>
+    <ProtectedRoute allowedRoles={["SUPER_ADMIN", "BRANCH_ADMIN"]}>
       <div className="space-y-6">
         <PageBreadcrumb pageTitle="Fees Collection" />
 
@@ -184,7 +182,21 @@ export default function FeesModulePage() {
                 onSelectStudent={setSelectedStudent}
                 selectedStudentId={selectedStudent?.id}
               />
+              {isLoadingStudents && (
+                <p className="text-sm text-gray-500 dark:text-gray-400">Loading linked students...</p>
+              )}
               <StudentInfoCard student={selectedStudent} />
+              {selectedStudent?.parentId && familyStudents.length > 1 && (
+                <label className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
+                  <input
+                    type="checkbox"
+                    checked={createForFamily}
+                    onChange={(event) => setCreateForFamily(event.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500"
+                  />
+                  Create challans for all {familyStudents.length} children linked to {selectedStudent.parentName || 'this parent'}
+                </label>
+              )}
             </ComponentCard>
 
             <ComponentCard
@@ -243,9 +255,25 @@ export default function FeesModulePage() {
                 <div className="space-y-2">
                   <DatePicker
                     id="fee-date"
-                    label="Fee Date"
+                    label="Issue Date"
                     defaultDate={formValues.date}
                     onChange={handleDateChange}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <DatePicker
+                    id="fee-due-date"
+                    label="Due Date"
+                    defaultDate={formValues.dueDate}
+                    onChange={handleDueDateChange}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <DatePicker
+                    id="fee-validity-date"
+                    label="Validity Date"
+                    defaultDate={formValues.validityDate}
+                    onChange={handleValidityDateChange}
                   />
                 </div>
               </div>
@@ -256,23 +284,43 @@ export default function FeesModulePage() {
               />
 
               <FeesSummary
-                total={total}
+                total={totals.total}
                 deposit={formValues.deposit}
                 onDepositChange={handleDepositChange}
                 onReset={handleReset}
               />
+              {errorMessage && (
+                <p className="rounded-lg border border-rose-100 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-300">
+                  {errorMessage}
+                </p>
+              )}
+              {statusMessage && (
+                <p className="rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300">
+                  {statusMessage}
+                </p>
+              )}
+              <Button
+                size="sm"
+                onClick={handleCreateChallan}
+                disabled={!selectedStudent || isSaving}
+              >
+                {isSaving ? 'Creating...' : createForFamily ? 'Create Family Challans' : 'Create Challan'}
+              </Button>
             </ComponentCard>
           </div>
 
           <div className="xl:col-span-1">
             <FeeSlipPreview
-              student={selectedStudent}
-              month={formValues.month}
-              date={formValues.date}
-              items={formValues.items}
-              total={total}
+              challan={createdChallans[0]}
+              student={createdChallans[0]?.student || selectedStudent}
+              month={createdChallans[0]?.fee_month || formValues.month}
+              date={createdChallans[0]?.issue_date || formValues.date}
+              dueDate={createdChallans[0]?.due_date || formValues.dueDate}
+              validityDate={createdChallans[0]?.validity_date || formValues.validityDate}
+              items={createdChallans[0]?.items || formValues.items}
+              total={createdChallans[0]?.total_amount ?? totals.total}
               deposit={formValues.deposit}
-              due={due}
+              due={createdChallans[0]?.due_amount ?? totals.due}
             />
           </div>
         </div>
@@ -280,4 +328,3 @@ export default function FeesModulePage() {
     </ProtectedRoute>
   );
 }
-

@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
             ? auth.supabase.from('user_profiles').select(PROFILE_COLUMNS).in('id', profileIds)
             : Promise.resolve({ data: [], error: null }),
         branchIds.length
-            ? auth.supabase.from('branches').select('id, name').in('id', branchIds)
+            ? auth.supabase.from('branches').select('id, name, address, phone_number, email').in('id', branchIds)
             : Promise.resolve({ data: [], error: null }),
         classIds.length
             ? auth.supabase.from('classes').select('id, name').in('id', classIds)
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
     }
 
     const profilesById = new Map((profiles || []).map((profile) => [profile.id, profile]));
-    const branchesById = new Map((branches || []).map((branch) => [branch.id, branch.name]));
+    const branchesById = new Map((branches || []).map((branch) => [branch.id, branch]));
     const classesById = new Map((classes || []).map((schoolClass) => [schoolClass.id, schoolClass.name]));
 
     return NextResponse.json({
@@ -73,7 +73,10 @@ export async function GET(request: NextRequest) {
                 ...student,
                 previous_balance: Number(student.previous_balance || 0),
                 monthly_fee: Number(student.monthly_fee || 0),
-                branch_name: student.branch_id ? branchesById.get(student.branch_id) || null : null,
+                branch_name: student.branch_id ? branchesById.get(student.branch_id)?.name || null : null,
+                branch_address: student.branch_id ? branchesById.get(student.branch_id)?.address || null : null,
+                branch_phone_number: student.branch_id ? branchesById.get(student.branch_id)?.phone_number || null : null,
+                branch_email: student.branch_id ? branchesById.get(student.branch_id)?.email || null : null,
                 class_name: student.class_id ? classesById.get(student.class_id) || null : null,
                 parent_name: parent?.name || null,
                 name: profile?.name || 'Unknown',

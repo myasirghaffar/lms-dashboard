@@ -83,7 +83,7 @@ DATABASE_URL="postgresql://user:password@localhost:5432/school_lms"
 
 # Authentication (for future implementation)
 NEXTAUTH_SECRET="your-secret-key"
-NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_URL="http://localhost:5400"
 
 # SMS Configuration (for attendance alerts)
 SMS_API_KEY="your-sms-api-key"
@@ -98,7 +98,7 @@ EMAIL_FROM="noreply@schoollms.com"
 
 # App Configuration
 APP_NAME="School LMS"
-APP_URL="http://localhost:3000"
+APP_URL="http://localhost:5400"
 NODE_ENV="development"
 ```
 
@@ -121,7 +121,7 @@ npx prisma db seed
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:5400](http://localhost:5400) in your browser.
 
 ## 📁 Project Structure
 
