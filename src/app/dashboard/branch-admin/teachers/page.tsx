@@ -11,11 +11,14 @@ import type { UserFormValues } from '@/components/dashboard/users/UserModal';
 import { Dropdown } from '@/components/ui/dropdown/Dropdown';
 import { DropdownItem } from '@/components/ui/dropdown/DropdownItem';
 import ConfirmModal from '@/components/ui/modal/ConfirmModal';
+import type { BranchRecord } from '@/types/branches';
+import { getProfileImageSrc } from '@/lib/profileImage';
 
 export default function TeachersPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [teachers, setTeachers] = useState<TeacherManagementRecord[]>([]);
+    const [branches, setBranches] = useState<BranchRecord[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
@@ -28,8 +31,12 @@ export default function TeachersPage() {
         setErrorMessage('');
 
         try {
-            const payload = await requestDashboardApi<{ teachers: TeacherManagementRecord[] }>('/api/teachers');
-            setTeachers(payload.teachers);
+            const [teachersPayload, branchesPayload] = await Promise.all([
+                requestDashboardApi<{ teachers: TeacherManagementRecord[] }>('/api/teachers'),
+                requestDashboardApi<{ branches: BranchRecord[] }>('/api/branches'),
+            ]);
+            setTeachers(teachersPayload.teachers);
+            setBranches(branchesPayload.branches);
         } catch (error) {
             setErrorMessage(error instanceof Error ? error.message : 'Unable to load teachers.');
         } finally {
@@ -123,6 +130,7 @@ export default function TeachersPage() {
                     initialData={editingTeacher}
                     onSubmit={handleSaveTeacher}
                     isSubmitting={isSubmitting}
+                    branches={branches}
                 />
 
                 <ConfirmModal
@@ -165,7 +173,7 @@ export default function TeachersPage() {
                                 <div className="flex items-center space-x-3">
                                     <div className="relative w-12 h-12">
                                         <Image
-                                            src={teacher.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(teacher.name)}`}
+                                            src={getProfileImageSrc(teacher.profile_image, teacher.name, 'Teacher')}
                                             alt={teacher.name}
                                             fill
                                             className="rounded-full object-cover"

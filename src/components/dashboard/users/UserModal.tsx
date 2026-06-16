@@ -4,6 +4,8 @@ import { Modal } from "@/components/ui/modal";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import Select from "@/components/form/Select";
+import ProfileImageUpload from "@/components/dashboard/users/ProfileImageUpload";
+import type { BranchRecord } from "@/types/branches";
 import type { SystemUserRecord, TeacherManagementRecord } from "@/types/user-management";
 
 interface UserModalProps {
@@ -14,6 +16,7 @@ interface UserModalProps {
     initialData?: Partial<SystemUserRecord & TeacherManagementRecord> | null;
     onSubmit?: (values: UserFormValues) => Promise<void>;
     isSubmitting?: boolean;
+    branches?: BranchRecord[];
 }
 
 export interface UserFormValues {
@@ -22,6 +25,7 @@ export interface UserFormValues {
     phone_number: string;
     address: string;
     profile_image: string;
+    branch_id: string;
     role: string;
     specialization?: string;
 }
@@ -32,6 +36,7 @@ const emptyForm: UserFormValues = {
     phone_number: "",
     address: "",
     profile_image: "",
+    branch_id: "",
     role: "ADMIN",
     specialization: "",
 };
@@ -39,6 +44,7 @@ const emptyForm: UserFormValues = {
 const getDefaultRole = (roleType: string) => {
     if (roleType === "PRINCIPAL") return "BRANCH_ADMIN";
     if (roleType === "TEACHER") return "TEACHER";
+    if (roleType === "PARENT") return "PARENT";
     return "ADMIN";
 };
 
@@ -50,6 +56,7 @@ const UserModal: React.FC<UserModalProps> = ({
     initialData = null,
     onSubmit,
     isSubmitting = false,
+    branches = [],
 }) => {
     const [formData, setFormData] = React.useState<UserFormValues>({
         ...emptyForm,
@@ -65,6 +72,7 @@ const UserModal: React.FC<UserModalProps> = ({
             phone_number: initialData?.phone_number || "",
             address: initialData?.address || "",
             profile_image: initialData?.profile_image || "",
+            branch_id: initialData?.branch_id || "",
             role: initialData?.role || getDefaultRole(roleType),
             specialization: initialData?.specialization || "",
         });
@@ -163,6 +171,25 @@ const UserModal: React.FC<UserModalProps> = ({
                         )}
                     </div>
 
+                    {roleType === 'TEACHER' && (
+                        <div>
+                            <Label htmlFor="teacherBranch">Branch</Label>
+                            <select
+                                id="teacherBranch"
+                                value={formData.branch_id}
+                                onChange={(e) => setFormData((current) => ({ ...current, branch_id: e.target.value }))}
+                                className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+                            >
+                                <option value="">Select Branch</option>
+                                {branches.map((branch) => (
+                                    <option key={branch.id} value={branch.id}>
+                                        {branch.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+
                     <div>
                         <Label htmlFor="userAddress">Address</Label>
                         <Input
@@ -175,17 +202,10 @@ const UserModal: React.FC<UserModalProps> = ({
                         />
                     </div>
 
-                    <div>
-                        <Label htmlFor="profileImage">Profile Image URL</Label>
-                        <Input
-                            id="profileImage"
-                            placeholder="https://..."
-                            name="profileImage"
-                            type="url"
-                            value={formData.profile_image}
-                            onChange={handleChange("profile_image")}
-                        />
-                    </div>
+                    <ProfileImageUpload
+                        value={formData.profile_image}
+                        onChange={(url) => setFormData((current) => ({ ...current, profile_image: url }))}
+                    />
 
                     <div className="flex justify-end gap-3 pt-6 border-t border-gray-100 dark:border-gray-800">
                         <button

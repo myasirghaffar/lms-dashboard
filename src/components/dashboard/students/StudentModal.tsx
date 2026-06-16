@@ -3,7 +3,9 @@ import React from "react";
 import { Modal } from "@/components/ui/modal";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
-import type { SchoolClassRecord, StudentManagementRecord } from "@/types/user-management";
+import ProfileImageUpload from "@/components/dashboard/users/ProfileImageUpload";
+import type { BranchRecord } from "@/types/branches";
+import type { SchoolClassRecord, StudentManagementRecord, SystemUserRecord } from "@/types/user-management";
 
 interface StudentModalProps {
     isOpen: boolean;
@@ -11,6 +13,8 @@ interface StudentModalProps {
     mode?: 'add' | 'edit' | 'view';
     initialData?: Partial<StudentManagementRecord> | null;
     classes?: SchoolClassRecord[];
+    branches?: BranchRecord[];
+    parents?: SystemUserRecord[];
     onSubmit?: (values: StudentFormValues) => Promise<void>;
     isSubmitting?: boolean;
 }
@@ -21,6 +25,7 @@ export interface StudentFormValues {
     phone_number: string;
     address: string;
     profile_image: string;
+    branch_id: string;
     roll_number: string;
     class_id: string;
     parent_profile_id: string;
@@ -35,6 +40,7 @@ const emptyForm: StudentFormValues = {
     phone_number: "",
     address: "",
     profile_image: "",
+    branch_id: "",
     roll_number: "",
     class_id: "",
     parent_profile_id: "",
@@ -49,6 +55,8 @@ const StudentModal: React.FC<StudentModalProps> = ({
     mode = 'add',
     initialData = null,
     classes = [],
+    branches = [],
+    parents = [],
     onSubmit,
     isSubmitting = false,
 }) => {
@@ -64,6 +72,7 @@ const StudentModal: React.FC<StudentModalProps> = ({
             phone_number: initialData?.phone_number || "",
             address: initialData?.address || "",
             profile_image: initialData?.profile_image || "",
+            branch_id: initialData?.branch_id || "",
             roll_number: initialData?.roll_number || "",
             class_id: initialData?.class_id || "",
             parent_profile_id: initialData?.parent_profile_id || "",
@@ -138,6 +147,23 @@ const StudentModal: React.FC<StudentModalProps> = ({
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
+                            <Label htmlFor="studentBranch">Branch</Label>
+                            <select
+                                id="studentBranch"
+                                value={formData.branch_id}
+                                onChange={handleChange("branch_id")}
+                                disabled={isViewOnly}
+                                className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+                            >
+                                <option value="">Select Branch</option>
+                                {branches.map((branch) => (
+                                    <option key={branch.id} value={branch.id}>
+                                        {branch.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
                             <Label htmlFor="studentClass">Class</Label>
                             <select
                                 id="studentClass"
@@ -154,6 +180,9 @@ const StudentModal: React.FC<StudentModalProps> = ({
                                 ))}
                             </select>
                         </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <Label htmlFor="studentEmail">Email Address</Label>
                             <Input
@@ -165,6 +194,23 @@ const StudentModal: React.FC<StudentModalProps> = ({
                                 onChange={handleChange("email")}
                                 disabled={isViewOnly}
                             />
+                        </div>
+                        <div>
+                            <Label htmlFor="parentProfile">Parent</Label>
+                            <select
+                                id="parentProfile"
+                                value={formData.parent_profile_id}
+                                onChange={handleChange("parent_profile_id")}
+                                disabled={isViewOnly}
+                                className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+                            >
+                                <option value="">Select Parent</option>
+                                {parents.map((parent) => (
+                                    <option key={parent.id} value={parent.id}>
+                                        {parent.name}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
                     </div>
 
@@ -193,6 +239,11 @@ const StudentModal: React.FC<StudentModalProps> = ({
                                 disabled={isViewOnly}
                             />
                         </div>
+                        <ProfileImageUpload
+                            value={formData.profile_image}
+                            onChange={(url) => setFormData((current) => ({ ...current, profile_image: url }))}
+                            disabled={isViewOnly}
+                        />
                     </div>
 
                     <div>

@@ -11,6 +11,7 @@ import { DropdownItem } from '@/components/ui/dropdown/DropdownItem';
 import ConfirmModal from '@/components/ui/modal/ConfirmModal';
 import type { SystemUserRecord } from '@/types/user-management';
 import type { UserFormValues } from '@/components/dashboard/users/UserModal';
+import { getProfileImageSrc } from '@/lib/profileImage';
 
 export default function AdminsPage() {
     const [isModalOpen, setIsModalOpen] = React.useState(false);
@@ -142,7 +143,7 @@ export default function AdminsPage() {
                                 <div className="flex items-center space-x-3">
                                     <div className="relative w-12 h-12">
                                         <Image
-                                            src={admin.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(admin.name || 'Admin')}`}
+                                            src={getProfileImageSrc(admin.profile_image, admin.name || 'Admin', 'Admin')}
                                             alt={admin.name || 'Admin'}
                                             fill
                                             className="rounded-full object-cover"

@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -70,8 +70,7 @@ const AppSidebar: React.FC = () => {
           subItems: [
             { name: "Admins", path: "/dashboard/super-admin/users/admins" },
             { name: "Principals", path: "/dashboard/super-admin/users/principals" },
-            { name: "All Students", path: "/dashboard/super-admin/users/students" },
-            { name: "All Teachers", path: "/dashboard/super-admin/users/teachers" },
+            { name: "Parents", path: "/dashboard/super-admin/users/parents" },
           ]
         },
         {
@@ -201,7 +200,7 @@ const AppSidebar: React.FC = () => {
     return items;
   };
 
-  const commItems: NavItem[] = [
+  const commItems: NavItem[] = useMemo(() => [
     {
       name: "Messages",
       icon: <ChatIcon />,
@@ -222,7 +221,7 @@ const AppSidebar: React.FC = () => {
       icon: <UserCircleIcon />,
       path: "/dashboard/profile",
     }
-  ];
+  ], []);
 
   const mainNavItems = getNavItems();
 
@@ -244,7 +243,7 @@ const AppSidebar: React.FC = () => {
       });
     });
     return matched;
-  }, [mainNavItems, pathname]);
+  }, [commItems, mainNavItems, pathname]);
 
   const [openSubmenu, setOpenSubmenu] = useState<{
     type: "main" | "others";

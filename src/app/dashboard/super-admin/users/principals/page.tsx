@@ -11,6 +11,7 @@ import type { UserFormValues } from '@/components/dashboard/users/UserModal';
 import { Dropdown } from '@/components/ui/dropdown/Dropdown';
 import { DropdownItem } from '@/components/ui/dropdown/DropdownItem';
 import ConfirmModal from '@/components/ui/modal/ConfirmModal';
+import { getProfileImageSrc } from '@/lib/profileImage';
 
 export default function PrincipalsPage() {
     const [isModalOpen, setIsModalOpen] = React.useState(false);
@@ -147,7 +148,7 @@ export default function PrincipalsPage() {
                                 <div className="flex items-center space-x-3">
                                     <div className="relative w-12 h-12">
                                         <Image
-                                            src={principal.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(principal.name || 'Principal')}`}
+                                            src={getProfileImageSrc(principal.profile_image, principal.name || 'Principal', 'Principal')}
                                             alt={principal.name || 'Principal'}
                                             fill
                                             className="rounded-full object-cover"

@@ -6,9 +6,11 @@ import { Search, Filter, GraduationCap, Eye, Edit, Trash2 } from 'lucide-react';
 import StudentModal from '@/components/dashboard/students/StudentModal';
 import Image from 'next/image';
 import { requestDashboardApi } from '@/lib/dashboardApi';
-import type { SchoolClassRecord, StudentManagementRecord } from '@/types/user-management';
+import type { SchoolClassRecord, StudentManagementRecord, SystemUserRecord } from '@/types/user-management';
 import type { StudentFormValues } from '@/components/dashboard/students/StudentModal';
 import ConfirmModal from '@/components/ui/modal/ConfirmModal';
+import type { BranchRecord } from '@/types/branches';
+import { getProfileImageSrc } from '@/lib/profileImage';
 
 export default function StudentsPage() {
     const [modalState, setModalState] = useState<{
@@ -23,6 +25,8 @@ export default function StudentsPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [students, setStudents] = useState<StudentManagementRecord[]>([]);
     const [classes, setClasses] = useState<SchoolClassRecord[]>([]);
+    const [branches, setBranches] = useState<BranchRecord[]>([]);
+    const [parents, setParents] = useState<SystemUserRecord[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
@@ -33,12 +37,16 @@ export default function StudentsPage() {
         setErrorMessage('');
 
         try {
-            const [studentsPayload, classesPayload] = await Promise.all([
+            const [studentsPayload, classesPayload, branchesPayload, parentsPayload] = await Promise.all([
                 requestDashboardApi<{ students: StudentManagementRecord[] }>('/api/students'),
                 requestDashboardApi<{ classes: SchoolClassRecord[] }>('/api/classes'),
+                requestDashboardApi<{ branches: BranchRecord[] }>('/api/branches'),
+                requestDashboardApi<{ users: SystemUserRecord[] }>('/api/users?role=PARENT'),
             ]);
             setStudents(studentsPayload.students);
             setClasses(classesPayload.classes);
+            setBranches(branchesPayload.branches);
+            setParents(parentsPayload.users);
         } catch (error) {
             setErrorMessage(error instanceof Error ? error.message : 'Unable to load students.');
         } finally {
@@ -127,6 +135,8 @@ export default function StudentsPage() {
                     mode={modalState.mode}
                     initialData={modalState.selectedData}
                     classes={classes}
+                    branches={branches}
+                    parents={parents}
                     onSubmit={handleSaveStudent}
                     isSubmitting={isSubmitting}
                 />
@@ -191,7 +201,7 @@ export default function StudentsPage() {
                                             <div className="flex items-center">
                                                 <div className="relative h-10 w-10 rounded-full overflow-hidden bg-gray-200">
                                                     <Image
-                                                        src={student.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name)}`}
+                                                        src={getProfileImageSrc(student.profile_image, student.name, 'Student')}
                                                         alt={student.name}
                                                         fill
                                                         className="h-full w-full object-cover"
