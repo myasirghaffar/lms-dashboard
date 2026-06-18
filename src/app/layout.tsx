@@ -29,7 +29,7 @@ export const metadata: Metadata = {
       { url: '/images/logo/logo-icon.svg', type: 'image/svg+xml' },
     ],
     apple: [
-      { url: '/pwa-icon-192.jpg', sizes: '192x192', type: 'image/jpeg' },
+      { url: '/images/logo/logo.svg', type: 'image/svg+xml' },
     ],
   },
 };
