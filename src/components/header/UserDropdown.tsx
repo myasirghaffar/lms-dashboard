@@ -41,7 +41,7 @@ export default function UserDropdown() {
           />
         </span>
 
-        <span className="block mr-1 font-medium text-theme-sm">
+        <span className="mr-1 block max-w-[140px] truncate whitespace-nowrap font-medium text-theme-sm">
           {user?.name || "Guest"}
         </span>
 

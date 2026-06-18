@@ -16,6 +16,7 @@ import ThermalFeeReceipt from "@/components/fees/ThermalFeeReceipt";
 import { Modal } from "@/components/ui/modal";
 import { requestDashboardApi } from "@/lib/dashboardApi";
 import { buildItemsForStudent, calculateFeeTotals, getDefaultFeeDates, MONTH_OPTIONS, toFeeStudent } from "@/lib/fees";
+import { Printer, Search } from "lucide-react";
 import {
   FeeChallanRecord,
   FeeFormValues,
@@ -68,6 +69,10 @@ export default function FeesModulePage() {
   const [receivedFrom, setReceivedFrom] = useState('');
   const [paymentReference, setPaymentReference] = useState('');
   const [paymentNotes, setPaymentNotes] = useState('');
+  const [feeRecordSearch, setFeeRecordSearch] = useState('');
+  const [feeRecordStatus, setFeeRecordStatus] = useState('all');
+  const [feeRecordMonth, setFeeRecordMonth] = useState('all');
+  const [feeRecordClass, setFeeRecordClass] = useState('all');
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoadingStudents, setIsLoadingStudents] = useState(true);
@@ -127,6 +132,40 @@ export default function FeesModulePage() {
   }, [feeStudents, selectedStudent]);
 
   const selectedStudentsForCreation = createForFamily ? familyStudents : selectedStudent ? [selectedStudent] : [];
+
+  const feeRecordMonths = useMemo(() => {
+    return [...new Set(allChallans.map((challan) => challan.fee_month).filter(Boolean))];
+  }, [allChallans]);
+
+  const feeRecordClasses = useMemo(() => {
+    return [...new Set(allChallans.map((challan) => challan.student.class).filter(Boolean))].sort();
+  }, [allChallans]);
+
+  const filteredChallans = useMemo(() => {
+    const needle = feeRecordSearch.trim().toLowerCase();
+    return allChallans.filter((challan) => {
+      const matchesStatus = feeRecordStatus === 'all' || challan.status === feeRecordStatus;
+      const matchesMonth = feeRecordMonth === 'all' || challan.fee_month === feeRecordMonth;
+      const matchesClass = feeRecordClass === 'all' || challan.student.class === feeRecordClass;
+      const haystack = [
+        challan.student.name,
+        challan.student.rollNumber,
+        challan.student.class,
+        challan.student.id,
+        challan.student.parentName,
+        challan.challan_number,
+        challan.fee_month,
+        challan.status,
+        ...(challan.payments || []).flatMap((payment) => [
+          payment.receipt_number,
+          payment.received_from,
+          payment.reference_number,
+        ]),
+      ].filter(Boolean).join(' ').toLowerCase();
+
+      return matchesStatus && matchesMonth && matchesClass && (!needle || haystack.includes(needle));
+    });
+  }, [allChallans, feeRecordClass, feeRecordMonth, feeRecordSearch, feeRecordStatus]);
 
   const handleItemAmountChange = (id: FeeParticularId, amount: number) => {
     setFormValues((prev) => ({
@@ -219,6 +258,28 @@ export default function FeesModulePage() {
     setReceiptChallan(null);
     setErrorMessage('');
     setStatusMessage('');
+  };
+
+  const openReceiptModal = (challan: FeeChallanRecord) => {
+    const latestPayment = challan.payments?.[0] || null;
+    setSelectedPaymentChallan(challan);
+    setReceiptPayment(latestPayment);
+    setReceiptChallan(challan);
+    setPaymentAmount(0);
+    setPaymentMethod('cash');
+    setPaymentDate(new Date().toISOString().slice(0, 10));
+    setReceivedFrom(challan.student.parentName || challan.student.name);
+    setPaymentReference('');
+    setPaymentNotes('');
+    setErrorMessage('');
+    setStatusMessage('');
+  };
+
+  const clearFeeRecordFilters = () => {
+    setFeeRecordSearch('');
+    setFeeRecordStatus('all');
+    setFeeRecordMonth('all');
+    setFeeRecordClass('all');
   };
 
   const handleRecordPayment = async () => {
@@ -429,8 +490,68 @@ export default function FeesModulePage() {
               No fee challans have been created yet.
             </p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[980px] text-sm">
+            <div className="space-y-4">
+              <div className="grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_180px_180px_180px_auto]">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <input
+                    value={feeRecordSearch}
+                    onChange={(event) => setFeeRecordSearch(event.target.value)}
+                    placeholder="Search student, roll no, challan, parent, receipt..."
+                    className="h-11 w-full rounded-lg border border-gray-300 bg-white pl-10 pr-3 text-sm text-gray-800 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                  />
+                </div>
+                <select
+                  value={feeRecordStatus}
+                  onChange={(event) => setFeeRecordStatus(event.target.value)}
+                  className="h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-800 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                >
+                  <option value="all">All statuses</option>
+                  <option value="issued">Issued</option>
+                  <option value="partial">Partial</option>
+                  <option value="paid">Paid</option>
+                  <option value="overdue">Overdue</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+                <select
+                  value={feeRecordMonth}
+                  onChange={(event) => setFeeRecordMonth(event.target.value)}
+                  className="h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-800 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                >
+                  <option value="all">All months</option>
+                  {feeRecordMonths.map((month) => <option key={month} value={month}>{month}</option>)}
+                </select>
+                <select
+                  value={feeRecordClass}
+                  onChange={(event) => setFeeRecordClass(event.target.value)}
+                  className="h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-800 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                >
+                  <option value="all">All classes</option>
+                  {feeRecordClasses.map((className) => <option key={className} value={className}>{className}</option>)}
+                </select>
+                <button
+                  type="button"
+                  onClick={clearFeeRecordFilters}
+                  className="h-11 rounded-lg border border-gray-300 px-4 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                >
+                  Clear
+                </button>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-gray-500 dark:text-gray-400">
+                <span>
+                  Showing {filteredChallans.length} of {allChallans.length} fee record{allChallans.length === 1 ? '' : 's'}
+                </span>
+                <span>Use receipt number search to reprint an old thermal slip.</span>
+              </div>
+
+              {filteredChallans.length === 0 ? (
+                <p className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-5 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+                  No fee records match the selected filters.
+                </p>
+              ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[980px] text-sm">
                 <thead className="bg-gray-50 text-xs uppercase text-gray-500 dark:bg-gray-900 dark:text-gray-400">
                   <tr>
                     <th className="px-4 py-3 text-left font-semibold">Student</th>
@@ -444,7 +565,7 @@ export default function FeesModulePage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                  {allChallans.map((challan) => (
+                  {filteredChallans.map((challan) => (
                     <tr key={challan.id}>
                       <td className="px-4 py-3">
                         <p className="font-semibold text-gray-900 dark:text-white">{challan.student.name}</p>
@@ -467,19 +588,36 @@ export default function FeesModulePage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <button
-                          type="button"
-                          onClick={() => openPaymentModal(challan)}
-                          disabled={challan.status === 'paid' || challan.status === 'cancelled' || challan.due_amount <= 0}
-                          className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600"
-                        >
-                          {challan.status === 'paid' || challan.due_amount <= 0 ? 'Paid' : 'Record Payment'}
-                        </button>
+                        {challan.status === 'paid' || challan.due_amount <= 0 ? (
+                          challan.payments?.length ? (
+                            <button
+                              type="button"
+                              onClick={() => openReceiptModal(challan)}
+                              className="inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-900/50 dark:bg-emerald-900/20 dark:text-emerald-300"
+                            >
+                              <Printer className="h-3.5 w-3.5" />
+                              Print Slip
+                            </button>
+                          ) : (
+                            <span className="inline-flex rounded-lg bg-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-300">Paid</span>
+                          )
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => openPaymentModal(challan)}
+                            disabled={challan.status === 'cancelled'}
+                            className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600"
+                          >
+                            Record Payment
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
                 </tbody>
-              </table>
+                </table>
+              </div>
+              )}
             </div>
           )}
         </ComponentCard>

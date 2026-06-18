@@ -29,30 +29,21 @@ function formatMethod(value?: string) {
   return (value || 'cash').replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function receiptFileName(payment: FeePaymentRecord | null, challan?: FeeChallanRecord | null) {
-  const studentName = challan?.student?.name || payment?.challan?.student?.name || 'Student';
-  const receipt = payment?.receipt_number || 'Receipt';
-  return `${studentName} ${receipt}`.replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, ' ').trim();
-}
-
 const ThermalFeeReceipt: React.FC<ThermalFeeReceiptProps> = ({ payment, challan }) => {
   const effectiveChallan = challan || payment?.challan || null;
 
   const handlePrint = () => {
     if (typeof window === 'undefined') return;
-    const previousTitle = document.title;
-    document.title = receiptFileName(payment, effectiveChallan);
     document.body.classList.add('thermal-receipt-printing');
 
-    const restoreTitle = () => {
-      document.title = previousTitle;
+    const cleanupPrintMode = () => {
       document.body.classList.remove('thermal-receipt-printing');
-      window.removeEventListener('afterprint', restoreTitle);
+      window.removeEventListener('afterprint', cleanupPrintMode);
     };
 
-    window.addEventListener('afterprint', restoreTitle);
+    window.addEventListener('afterprint', cleanupPrintMode);
     window.print();
-    window.setTimeout(restoreTitle, 1500);
+    window.setTimeout(cleanupPrintMode, 1500);
   };
 
   if (!payment) {
@@ -68,11 +59,11 @@ const ThermalFeeReceipt: React.FC<ThermalFeeReceiptProps> = ({ payment, challan 
       <div className="no-print flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
         <div>
           <p className="text-xs font-semibold uppercase text-brand-600">Payment Receipt</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Thermal slip for fee record.</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Send this slip to the thermal printer.</p>
         </div>
         <Button size="sm" variant="outline" onClick={handlePrint} className="px-3 py-2 text-xs">
           <Printer className="h-4 w-4" />
-          Print
+          Print Slip
         </Button>
       </div>
 
