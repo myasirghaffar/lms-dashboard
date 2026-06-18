@@ -3,7 +3,9 @@
 import React, { useEffect, useState } from 'react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import PageBreadcrumb from '@/components/common/PageBreadCrumb';
+import FeePaymentHistory from '@/components/fees/FeePaymentHistory';
 import FeeSlipPreview from '@/components/fees/FeeSlipPreview';
+import ThermalFeeReceipt from '@/components/fees/ThermalFeeReceipt';
 import { requestDashboardApi } from '@/lib/dashboardApi';
 import type { FeeChallanRecord } from '@/types/fees';
 
@@ -12,6 +14,7 @@ type ChallansResponse = { challans: FeeChallanRecord[] };
 export default function StudentFeesPage() {
   const [challans, setChallans] = useState<FeeChallanRecord[]>([]);
   const [selectedChallanId, setSelectedChallanId] = useState<string | null>(null);
+  const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -41,6 +44,11 @@ export default function StudentFeesPage() {
   }, []);
 
   const selectedChallan = challans.find((challan) => challan.id === selectedChallanId) || challans[0] || null;
+  const selectedPayment = selectedChallan?.payments?.find((payment) => payment.id === selectedPaymentId) || selectedChallan?.payments?.[0] || null;
+
+  useEffect(() => {
+    setSelectedPaymentId(selectedChallan?.payments?.[0]?.id || null);
+  }, [selectedChallan?.id, selectedChallan?.payments]);
 
   return (
     <ProtectedRoute allowedRoles={['STUDENT']}>
@@ -80,18 +88,30 @@ export default function StudentFeesPage() {
             </div>
 
             {selectedChallan && (
-              <FeeSlipPreview
-                challan={selectedChallan}
-                student={selectedChallan.student}
-                month={selectedChallan.fee_month}
-                date={selectedChallan.issue_date}
-                dueDate={selectedChallan.due_date}
-                validityDate={selectedChallan.validity_date}
-                items={selectedChallan.items}
-                total={selectedChallan.total_amount}
-                deposit={selectedChallan.deposit_amount}
-                due={selectedChallan.due_amount}
-              />
+              <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+                <div className="min-w-0 overflow-hidden">
+                  <FeeSlipPreview
+                    challan={selectedChallan}
+                    student={selectedChallan.student}
+                    month={selectedChallan.fee_month}
+                    date={selectedChallan.issue_date}
+                    dueDate={selectedChallan.due_date}
+                    validityDate={selectedChallan.validity_date}
+                    items={selectedChallan.items}
+                    total={selectedChallan.total_amount}
+                    deposit={selectedChallan.deposit_amount}
+                    due={selectedChallan.due_amount}
+                  />
+                </div>
+                <div className="space-y-4">
+                  <FeePaymentHistory
+                    payments={selectedChallan.payments}
+                    selectedPaymentId={selectedPayment?.id || null}
+                    onSelectPayment={(payment) => setSelectedPaymentId(payment.id)}
+                  />
+                  <ThermalFeeReceipt payment={selectedPayment} challan={selectedChallan} />
+                </div>
+              </div>
             )}
           </div>
         )}

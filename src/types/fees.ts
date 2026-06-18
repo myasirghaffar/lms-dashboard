@@ -62,13 +62,14 @@ export interface FeeChallanRecord {
   due_amount: number;
   late_fee_amount: number;
   payable_after_due_date: number;
-  status: 'draft' | 'issued' | 'paid' | 'cancelled' | 'overdue';
+  status: 'draft' | 'issued' | 'partial' | 'paid' | 'cancelled' | 'overdue';
   notes: string;
   created_by_profile_id: string | null;
   created_at: string;
   updated_at: string;
   student: FeeStudent;
   items: FeeLineItem[];
+  payments?: FeePaymentRecord[];
 }
 
 export interface FeeChallanPayload {
@@ -79,5 +80,38 @@ export interface FeeChallanPayload {
   validity_date: string;
   items: FeeLineItem[];
   deposit_amount: number;
+  notes?: string;
+}
+
+export type FeePaymentMethod = 'cash' | 'bank_transfer' | 'card' | 'cheque' | 'online' | 'other';
+
+export interface FeePaymentRecord {
+  id: string;
+  receipt_number: string;
+  challan_id: string;
+  student_id: string;
+  parent_profile_id: string | null;
+  branch_id: string | null;
+  class_id: string | null;
+  amount: number;
+  payment_method: FeePaymentMethod;
+  payment_date: string;
+  received_from: string;
+  reference_number: string;
+  notes: string;
+  received_by_profile_id: string | null;
+  received_by_name?: string | null;
+  created_at: string;
+  updated_at: string;
+  challan?: FeeChallanRecord;
+}
+
+export interface FeePaymentPayload {
+  challan_id: string;
+  amount: number;
+  payment_method: FeePaymentMethod;
+  payment_date: string;
+  received_from?: string;
+  reference_number?: string;
   notes?: string;
 }

@@ -93,7 +93,7 @@ const FeeSlipPreview: React.FC<FeeSlipPreviewProps> = ({
   };
 
   return (
-    <div className="challan-print-root space-y-4">
+    <div className="challan-print-root min-w-0 max-w-full space-y-4 overflow-hidden">
       <div className="no-print flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
         <div>
           <p className="text-xs font-semibold uppercase text-brand-600">Fee Challan</p>
@@ -111,7 +111,7 @@ const FeeSlipPreview: React.FC<FeeSlipPreviewProps> = ({
         </div>
       </div>
 
-      <div className="challan-sheet overflow-x-auto bg-white p-3 text-black shadow-sm dark:bg-white">
+      <div className="challan-sheet max-w-full overflow-x-auto overscroll-x-contain bg-white p-3 text-black shadow-sm dark:bg-white">
         <div className="challan-grid grid min-w-[980px] grid-cols-3 gap-3">
           {copyLabels.map((copyLabel) => (
             <div key={copyLabel} className="challan-copy border border-black bg-white p-2 text-[10px] leading-tight">
@@ -231,13 +231,18 @@ const FeeSlipPreview: React.FC<FeeSlipPreviewProps> = ({
           body * {
             visibility: hidden !important;
           }
-          .challan-print-root,
-          .challan-print-root * ,
-          .challan-sheet,
-          .challan-sheet * {
+          body:not(.thermal-receipt-printing) .challan-print-root,
+          body:not(.thermal-receipt-printing) .challan-print-root * ,
+          body:not(.thermal-receipt-printing) .challan-sheet,
+          body:not(.thermal-receipt-printing) .challan-sheet * {
             visibility: visible !important;
           }
-          .challan-print-root {
+          body.thermal-receipt-printing .challan-print-root,
+          body.thermal-receipt-printing .challan-print-root * {
+            display: none !important;
+            visibility: hidden !important;
+          }
+          body:not(.thermal-receipt-printing) .challan-print-root {
             position: fixed !important;
             inset: 0 !important;
             width: 297mm !important;
@@ -251,7 +256,7 @@ const FeeSlipPreview: React.FC<FeeSlipPreviewProps> = ({
             page-break-after: avoid !important;
             page-break-before: avoid !important;
           }
-          .challan-sheet {
+          body:not(.thermal-receipt-printing) .challan-sheet {
             position: absolute !important;
             inset: 0 !important;
             width: 297mm !important;
@@ -266,7 +271,7 @@ const FeeSlipPreview: React.FC<FeeSlipPreviewProps> = ({
             page-break-after: avoid !important;
             page-break-before: avoid !important;
           }
-          .challan-grid {
+          body:not(.thermal-receipt-printing) .challan-grid {
             display: grid !important;
             grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
             gap: 3mm !important;
@@ -275,7 +280,7 @@ const FeeSlipPreview: React.FC<FeeSlipPreviewProps> = ({
             height: 100% !important;
             overflow: hidden !important;
           }
-          .challan-copy {
+          body:not(.thermal-receipt-printing) .challan-copy {
             height: 100% !important;
             min-height: 0 !important;
             overflow: hidden !important;
@@ -285,30 +290,30 @@ const FeeSlipPreview: React.FC<FeeSlipPreviewProps> = ({
             break-inside: avoid-page !important;
             page-break-inside: avoid !important;
           }
-          .challan-copy table {
+          body:not(.thermal-receipt-printing) .challan-copy table {
             margin-top: 1.5mm !important;
             break-inside: avoid-page !important;
             page-break-inside: avoid !important;
           }
-          .challan-copy th,
-          .challan-copy td {
+          body:not(.thermal-receipt-printing) .challan-copy th,
+          body:not(.thermal-receipt-printing) .challan-copy td {
             padding: 0.8mm 1mm !important;
           }
-          .challan-terms {
+          body:not(.thermal-receipt-printing) .challan-terms {
             font-size: 6.2px !important;
             line-height: 1.05 !important;
           }
-          .challan-signature {
+          body:not(.thermal-receipt-printing) .challan-signature {
             margin-top: 2mm !important;
           }
-          .challan-signature > div {
+          body:not(.thermal-receipt-printing) .challan-signature > div {
             height: 9mm !important;
           }
-          .challan-barcode {
+          body:not(.thermal-receipt-printing) .challan-barcode {
             height: 6mm !important;
             margin-top: 1.5mm !important;
           }
-          .challan-barcode span {
+          body:not(.thermal-receipt-printing) .challan-barcode span {
             height: 6mm !important;
           }
           .no-print {

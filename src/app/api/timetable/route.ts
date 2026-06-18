@@ -81,16 +81,26 @@ export async function GET(request: NextRequest) {
                 .eq('user_profile_id', profile.id)
                 .maybeSingle();
             if (studentError) throw new Error(studentError.message);
-            if (!student?.class_id) return NextResponse.json({ timetable: [] });
+            if (!student?.class_id) return NextResponse.json({ entries: [], timetable: [] });
             query = query.eq('class_id', student.class_id);
         }
 
         const classId = request.nextUrl.searchParams.get('class_id');
         if (classId && canManageAcademics(auth.role)) query = query.eq('class_id', classId);
 
+        const teacherProfileId = request.nextUrl.searchParams.get('teacher_profile_id');
+        if (teacherProfileId && canManageAcademics(auth.role)) query = query.eq('teacher_profile_id', teacherProfileId);
+
+        const branchId = request.nextUrl.searchParams.get('branch_id');
+        if (branchId && canManageAcademics(auth.role)) query = query.eq('branch_id', branchId);
+
+        const dayOfWeek = request.nextUrl.searchParams.get('day_of_week');
+        if (dayOfWeek && canManageAcademics(auth.role) && DAYS.includes(dayOfWeek)) query = query.eq('day_of_week', dayOfWeek);
+
         const { data, error } = await query;
         if (error) throw new Error(error.message);
-        return NextResponse.json({ timetable: await decorateEntries(auth, data || []) });
+        const entries = await decorateEntries(auth, data || []);
+        return NextResponse.json({ entries, timetable: entries });
     } catch (error) {
         return jsonError(error, 'Unable to load timetable.');
     }

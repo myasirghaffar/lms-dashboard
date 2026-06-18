@@ -10,12 +10,17 @@ import StudentSearch from "@/components/fees/StudentSearch";
 import StudentInfoCard from "@/components/fees/StudentInfoCard";
 import FeesTable from "@/components/fees/FeesTable";
 import FeesSummary from "@/components/fees/FeesSummary";
+import FeePaymentHistory from "@/components/fees/FeePaymentHistory";
 import FeeSlipPreview from "@/components/fees/FeeSlipPreview";
+import ThermalFeeReceipt from "@/components/fees/ThermalFeeReceipt";
+import { Modal } from "@/components/ui/modal";
 import { requestDashboardApi } from "@/lib/dashboardApi";
 import { buildItemsForStudent, calculateFeeTotals, getDefaultFeeDates, MONTH_OPTIONS, toFeeStudent } from "@/lib/fees";
 import {
   FeeChallanRecord,
   FeeFormValues,
+  FeePaymentMethod,
+  FeePaymentRecord,
   FeeParticularId,
   FeeStudent,
 } from "@/types/fees";
@@ -23,6 +28,16 @@ import type { StudentManagementRecord } from "@/types/user-management";
 
 type StudentsResponse = { students: StudentManagementRecord[] };
 type ChallansResponse = { challans: FeeChallanRecord[] };
+type PaymentResponse = { payment: FeePaymentRecord; challan: FeeChallanRecord };
+
+const PAYMENT_METHOD_OPTIONS: { value: FeePaymentMethod; label: string }[] = [
+  { value: 'cash', label: 'Cash' },
+  { value: 'bank_transfer', label: 'Bank Transfer' },
+  { value: 'card', label: 'Card' },
+  { value: 'cheque', label: 'Cheque' },
+  { value: 'online', label: 'Online' },
+  { value: 'other', label: 'Other' },
+];
 
 const buildInitialFormValues = (student: FeeStudent | null): FeeFormValues => {
   const dates = getDefaultFeeDates();
@@ -43,18 +58,41 @@ export default function FeesModulePage() {
     null,
   );
   const [createdChallans, setCreatedChallans] = useState<FeeChallanRecord[]>([]);
+  const [allChallans, setAllChallans] = useState<FeeChallanRecord[]>([]);
+  const [selectedPaymentChallan, setSelectedPaymentChallan] = useState<FeeChallanRecord | null>(null);
+  const [receiptPayment, setReceiptPayment] = useState<FeePaymentRecord | null>(null);
+  const [receiptChallan, setReceiptChallan] = useState<FeeChallanRecord | null>(null);
+  const [paymentAmount, setPaymentAmount] = useState(0);
+  const [paymentMethod, setPaymentMethod] = useState<FeePaymentMethod>('cash');
+  const [paymentDate, setPaymentDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [receivedFrom, setReceivedFrom] = useState('');
+  const [paymentReference, setPaymentReference] = useState('');
+  const [paymentNotes, setPaymentNotes] = useState('');
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoadingStudents, setIsLoadingStudents] = useState(true);
+  const [isLoadingChallans, setIsLoadingChallans] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isRecordingPayment, setIsRecordingPayment] = useState(false);
   const [createForFamily, setCreateForFamily] = useState(false);
   const [formValues, setFormValues] = useState<FeeFormValues>(() =>
     buildInitialFormValues(null),
   );
 
+  const loadChallans = React.useCallback(async () => {
+    setIsLoadingChallans(true);
+    try {
+      const payload = await requestDashboardApi<ChallansResponse>('/api/fee-challans');
+      setAllChallans(payload.challans);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Unable to load challan records.');
+    } finally {
+      setIsLoadingChallans(false);
+    }
+  }, []);
+
   useEffect(() => {
     let mounted = true;
-
     const loadStudents = async () => {
       setIsLoadingStudents(true);
       setErrorMessage("");
@@ -71,10 +109,11 @@ export default function FeesModulePage() {
     };
 
     void loadStudents();
+    void loadChallans();
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [loadChallans]);
 
   useEffect(() => {
     setFormValues(buildInitialFormValues(selectedStudent));
@@ -158,11 +197,65 @@ export default function FeesModulePage() {
         }),
       });
       setCreatedChallans(payload.challans);
+      setAllChallans((current) => [...payload.challans, ...current]);
       setStatusMessage(`${payload.challans.length} challan${payload.challans.length === 1 ? '' : 's'} created.`);
+      void loadChallans();
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Unable to create challan.');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const openPaymentModal = (challan: FeeChallanRecord) => {
+    setSelectedPaymentChallan(challan);
+    setPaymentAmount(challan.due_amount);
+    setPaymentMethod('cash');
+    setPaymentDate(new Date().toISOString().slice(0, 10));
+    setReceivedFrom(challan.student.parentName || challan.student.name);
+    setPaymentReference('');
+    setPaymentNotes('');
+    setReceiptPayment(null);
+    setReceiptChallan(null);
+    setErrorMessage('');
+    setStatusMessage('');
+  };
+
+  const handleRecordPayment = async () => {
+    if (!selectedPaymentChallan) return;
+    setIsRecordingPayment(true);
+    setErrorMessage('');
+    setStatusMessage('');
+    try {
+      const payload = await requestDashboardApi<PaymentResponse>('/api/fee-payments', {
+        method: 'POST',
+        body: JSON.stringify({
+          challan_id: selectedPaymentChallan.id,
+          amount: paymentAmount,
+          payment_method: paymentMethod,
+          payment_date: paymentDate,
+          received_from: receivedFrom,
+          reference_number: paymentReference,
+          notes: paymentNotes,
+        }),
+      });
+      const updatedChallan = {
+        ...selectedPaymentChallan,
+        ...payload.challan,
+        student: selectedPaymentChallan.student,
+        items: selectedPaymentChallan.items,
+        payments: [payload.payment, ...(selectedPaymentChallan.payments || [])],
+      };
+      setReceiptPayment(payload.payment);
+      setReceiptChallan(updatedChallan);
+      setSelectedPaymentChallan(updatedChallan);
+      setAllChallans((current) => current.map((challan) => challan.id === updatedChallan.id ? updatedChallan : challan));
+      setStatusMessage(`Payment recorded. Receipt ${payload.payment.receipt_number} created.`);
+      void loadChallans();
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Unable to record payment.');
+    } finally {
+      setIsRecordingPayment(false);
     }
   };
 
@@ -324,7 +417,186 @@ export default function FeesModulePage() {
             />
           </div>
         </div>
+
+        <ComponentCard
+          title="Fee Records"
+          desc="Track issued challans, received payments, outstanding balances, and receipt history."
+        >
+          {isLoadingChallans ? (
+            <p className="text-sm text-gray-500 dark:text-gray-400">Loading fee records...</p>
+          ) : !allChallans.length ? (
+            <p className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-5 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+              No fee challans have been created yet.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[980px] text-sm">
+                <thead className="bg-gray-50 text-xs uppercase text-gray-500 dark:bg-gray-900 dark:text-gray-400">
+                  <tr>
+                    <th className="px-4 py-3 text-left font-semibold">Student</th>
+                    <th className="px-4 py-3 text-left font-semibold">Challan</th>
+                    <th className="px-4 py-3 text-left font-semibold">Month</th>
+                    <th className="px-4 py-3 text-right font-semibold">Total</th>
+                    <th className="px-4 py-3 text-right font-semibold">Paid</th>
+                    <th className="px-4 py-3 text-right font-semibold">Due</th>
+                    <th className="px-4 py-3 text-left font-semibold">Status</th>
+                    <th className="px-4 py-3 text-right font-semibold">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {allChallans.map((challan) => (
+                    <tr key={challan.id}>
+                      <td className="px-4 py-3">
+                        <p className="font-semibold text-gray-900 dark:text-white">{challan.student.name}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{challan.student.class} · {challan.student.rollNumber || challan.student.id}</p>
+                      </td>
+                      <td className="px-4 py-3 font-mono text-xs text-gray-600 dark:text-gray-300">{challan.challan_number}</td>
+                      <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{challan.fee_month}</td>
+                      <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-200">Rs. {challan.total_amount.toLocaleString()}</td>
+                      <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-200">Rs. {challan.deposit_amount.toLocaleString()}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-gray-900 dark:text-white">Rs. {challan.due_amount.toLocaleString()}</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${
+                          challan.status === 'paid'
+                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                            : challan.status === 'partial'
+                              ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                              : 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                        }`}>
+                          {challan.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          type="button"
+                          onClick={() => openPaymentModal(challan)}
+                          disabled={challan.status === 'paid' || challan.status === 'cancelled' || challan.due_amount <= 0}
+                          className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600"
+                        >
+                          {challan.status === 'paid' || challan.due_amount <= 0 ? 'Paid' : 'Record Payment'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </ComponentCard>
+
+        <Modal isOpen={Boolean(selectedPaymentChallan)} onClose={() => setSelectedPaymentChallan(null)} className="max-w-5xl">
+          <div className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+            <div>
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Record Fee Payment</h2>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  {selectedPaymentChallan?.student.name} · {selectedPaymentChallan?.fee_month} · {selectedPaymentChallan?.challan_number}
+                </p>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-3">
+                <SummaryBox label="Total Fee" value={`Rs. ${(selectedPaymentChallan?.total_amount || 0).toLocaleString()}`} />
+                <SummaryBox label="Paid" value={`Rs. ${(selectedPaymentChallan?.deposit_amount || 0).toLocaleString()}`} />
+                <SummaryBox label="Due" value={`Rs. ${(selectedPaymentChallan?.due_amount || 0).toLocaleString()}`} strong />
+              </div>
+
+              <div className="mt-6 grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Amount Received</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={selectedPaymentChallan?.due_amount || undefined}
+                    value={paymentAmount}
+                    onChange={(event) => setPaymentAmount(Math.max(0, Number(event.target.value || 0)))}
+                    className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-800 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Payment Date</label>
+                  <input
+                    type="date"
+                    value={paymentDate}
+                    onChange={(event) => setPaymentDate(event.target.value)}
+                    className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-800 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Payment Method</label>
+                  <select
+                    value={paymentMethod}
+                    onChange={(event) => setPaymentMethod(event.target.value as FeePaymentMethod)}
+                    className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-800 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                  >
+                    {PAYMENT_METHOD_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Received From</label>
+                  <input
+                    value={receivedFrom}
+                    onChange={(event) => setReceivedFrom(event.target.value)}
+                    className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-800 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Reference No.</label>
+                  <input
+                    value={paymentReference}
+                    onChange={(event) => setPaymentReference(event.target.value)}
+                    placeholder="Optional bank/reference number"
+                    className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-800 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label>
+                  <input
+                    value={paymentNotes}
+                    onChange={(event) => setPaymentNotes(event.target.value)}
+                    placeholder="Optional"
+                    className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-800 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-6 flex justify-end gap-3 border-t border-gray-100 pt-5 dark:border-gray-800">
+                <button type="button" onClick={() => setSelectedPaymentChallan(null)} className="rounded-lg px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800">
+                  Close
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRecordPayment}
+                  disabled={isRecordingPayment || !selectedPaymentChallan || selectedPaymentChallan.due_amount <= 0}
+                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
+                >
+                  {isRecordingPayment ? 'Recording...' : 'Record Payment'}
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <FeePaymentHistory
+                payments={selectedPaymentChallan?.payments}
+                selectedPaymentId={(receiptPayment || selectedPaymentChallan?.payments?.[0])?.id || null}
+                onSelectPayment={(payment) => {
+                  setReceiptPayment(payment);
+                  setReceiptChallan(selectedPaymentChallan);
+                }}
+              />
+              <ThermalFeeReceipt payment={receiptPayment || selectedPaymentChallan?.payments?.[0] || null} challan={receiptChallan || selectedPaymentChallan} />
+            </div>
+          </div>
+        </Modal>
       </div>
     </ProtectedRoute>
+  );
+}
+
+function SummaryBox({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
+  return (
+    <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
+      <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{label}</p>
+      <p className={`mt-1 text-lg font-bold ${strong ? 'text-blue-700 dark:text-blue-300' : 'text-gray-900 dark:text-white'}`}>{value}</p>
+    </div>
   );
 }

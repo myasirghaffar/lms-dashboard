@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireUser } from '@/lib/supabaseServer';
 import { getCurrentProfile } from '@/lib/academicApi';
 import { calculateFeeTotals } from '@/lib/fees';
-import type { FeeChallanPayload, FeeLineItem } from '@/types/fees';
+import type { FeeChallanPayload, FeeLineItem, FeePaymentRecord } from '@/types/fees';
 
 const CHALLAN_COLUMNS = 'id, challan_number, student_id, parent_profile_id, branch_id, class_id, fee_month, issue_date, due_date, validity_date, subtotal, discount_amount, deposit_amount, total_amount, due_amount, late_fee_amount, payable_after_due_date, status, notes, created_by_profile_id, created_at, updated_at';
 const ITEM_COLUMNS = 'id, challan_id, particular_id, label, amount, sort_order';
+const PAYMENT_COLUMNS = 'id, receipt_number, challan_id, student_id, parent_profile_id, branch_id, class_id, amount, payment_method, payment_date, received_from, reference_number, notes, received_by_profile_id, created_at, updated_at';
 const STUDENT_COLUMNS = 'id, legacy_id, user_profile_id, parent_profile_id, branch_id, class_id, roll_number, father_name, previous_balance, monthly_fee';
 const PROFILE_COLUMNS = 'id, auth_user_id, email, name, phone_number, address, profile_image, role';
 
@@ -68,15 +69,24 @@ async function decorateChallans(auth: Exclude<Awaited<ReturnType<typeof requireU
   const challanIds = challans.map((challan) => challan.id);
   const studentIds = [...new Set(challans.map((challan) => challan.student_id).filter(Boolean))];
 
-  const [{ data: items, error: itemsError }, { data: students, error: studentsError }] = await Promise.all([
+  const [
+    { data: items, error: itemsError },
+    { data: payments, error: paymentsError },
+    { data: students, error: studentsError },
+  ] = await Promise.all([
     auth.supabase.from('fee_challan_items').select(ITEM_COLUMNS).in('challan_id', challanIds).order('sort_order', { ascending: true }),
+    auth.supabase.from('fee_payments').select(PAYMENT_COLUMNS).in('challan_id', challanIds).order('payment_date', { ascending: false }).order('created_at', { ascending: false }),
     auth.supabase.from('students').select(STUDENT_COLUMNS).in('id', studentIds),
   ]);
 
   if (itemsError) throw new Error(itemsError.message);
+  if (paymentsError) throw new Error(paymentsError.message);
   if (studentsError) throw new Error(studentsError.message);
 
   const profileIds = [...new Set((students || []).flatMap((student) => [student.user_profile_id, student.parent_profile_id]).filter(Boolean))];
+  (payments || []).forEach((payment) => {
+    if (payment.received_by_profile_id) profileIds.push(payment.received_by_profile_id);
+  });
   const branchIds = [...new Set((students || []).map((student) => student.branch_id).filter(Boolean))];
   const classIds = [...new Set((students || []).map((student) => student.class_id).filter(Boolean))];
 
@@ -109,6 +119,18 @@ async function decorateChallans(auth: Exclude<Awaited<ReturnType<typeof requireU
   const profilesById = new Map((profiles || []).map((profile) => [profile.id, profile]));
   const branchesById = new Map((branches || []).map((branch) => [branch.id, branch]));
   const classesById = new Map((classes || []).map((schoolClass) => [schoolClass.id, schoolClass]));
+
+  const paymentsByChallan = new Map<string, FeePaymentRecord[]>();
+  (payments || []).forEach((payment) => {
+    const rows = paymentsByChallan.get(payment.challan_id) || [];
+    const receiver = payment.received_by_profile_id ? profilesById.get(payment.received_by_profile_id) : null;
+    rows.push({
+      ...payment,
+      amount: Number(payment.amount || 0),
+      received_by_name: receiver?.name || null,
+    } as FeePaymentRecord);
+    paymentsByChallan.set(payment.challan_id, rows);
+  });
 
   return challans.map((challan) => {
     const studentRow = studentsById.get(challan.student_id);
@@ -144,6 +166,7 @@ async function decorateChallans(auth: Exclude<Awaited<ReturnType<typeof requireU
         previousBalance: Number(studentRow?.previous_balance || 0),
         monthlyFee: Number(studentRow?.monthly_fee || 0),
       },
+      payments: paymentsByChallan.get(challan.id) || [],
     };
   });
 }

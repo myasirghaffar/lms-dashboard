@@ -2,7 +2,7 @@
 
 import React from 'react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
-import { Edit3, GraduationCap, Mail, MapPin, MoreHorizontal, Phone, Trash2, UserRound, Users } from 'lucide-react';
+import { ChevronDown, Edit3, GraduationCap, Mail, MapPin, MoreHorizontal, Phone, Trash2, UserRound, Users } from 'lucide-react';
 import Image from 'next/image';
 import UserModal from '@/components/dashboard/users/UserModal';
 import ConfirmModal from '@/components/ui/modal/ConfirmModal';
@@ -20,6 +20,7 @@ export default function ParentsPage() {
     const [errorMessage, setErrorMessage] = React.useState('');
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [openMenuId, setOpenMenuId] = React.useState<string | null>(null);
+    const [expandedChildrenId, setExpandedChildrenId] = React.useState<string | null>(null);
     const [editingParent, setEditingParent] = React.useState<ParentManagementRecord | null>(null);
     const [deletingParent, setDeletingParent] = React.useState<ParentManagementRecord | null>(null);
 
@@ -139,10 +140,13 @@ export default function ParentsPage() {
 
                 <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
                     {isLoading && [1, 2, 3, 4].map((item) => (
-                        <div key={item} className="h-80 animate-pulse rounded-xl bg-white shadow-md dark:bg-gray-800" />
+                        <div key={item} className="h-56 animate-pulse rounded-xl bg-white shadow-md dark:bg-gray-800" />
                     ))}
 
-                    {!isLoading && parents.map((parent) => (
+                    {!isLoading && parents.map((parent) => {
+                        const childrenExpanded = expandedChildrenId === parent.id;
+
+                        return (
                         <div key={parent.id} className="rounded-xl bg-white p-6 shadow-md dark:bg-gray-800">
                             <div className="mb-5 flex items-start justify-between">
                                 <div className="flex items-center gap-3">
@@ -204,47 +208,65 @@ export default function ParentsPage() {
                                 </div>
                             </div>
 
-                            <div className="mt-5 border-t border-gray-100 pt-5 dark:border-gray-700">
-                                <div className="mb-3 flex items-center justify-between">
-                                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Children</h4>
-                                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                                        {parent.children.length}
-                                    </span>
+                            <div className="mt-5 border-t border-gray-100 pt-4 dark:border-gray-700">
+                                <div className="flex items-center justify-between gap-3">
+                                    <div>
+                                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Children</h4>
+                                        <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                                            {parent.children.length} linked student{parent.children.length === 1 ? '' : 's'}
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setExpandedChildrenId((current) => (current === parent.id ? null : parent.id))}
+                                        className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
+                                        aria-expanded={childrenExpanded}
+                                        aria-controls={`parent-${parent.id}-children`}
+                                    >
+                                        <span className="rounded-full bg-gray-100 px-2 py-0.5 dark:bg-gray-700">
+                                            {parent.children.length}
+                                        </span>
+                                        <ChevronDown className={`h-4 w-4 transition-transform ${childrenExpanded ? 'rotate-180' : ''}`} />
+                                    </button>
                                 </div>
 
-                                {parent.children.length === 0 ? (
-                                    <div className="rounded-lg border border-dashed border-gray-200 px-4 py-5 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                                        No students linked to this parent.
-                                    </div>
-                                ) : (
-                                    <div className="space-y-3">
-                                        {parent.children.map((child) => (
-                                            <div key={child.id} className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900/40">
-                                                <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
-                                                    <div>
-                                                        <div className="flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
-                                                            <GraduationCap className="h-4 w-4 text-blue-600" />
-                                                            {child.name}
-                                                        </div>
-                                                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{child.email}</p>
-                                                    </div>
-                                                    <div className="flex flex-wrap gap-2 text-xs">
-                                                        <span className="rounded-full bg-blue-50 px-2 py-1 font-medium text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
-                                                            {child.class_name || 'Unassigned class'}
-                                                        </span>
-                                                        <span className="rounded-full bg-gray-100 px-2 py-1 font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                                                            Roll {child.roll_number}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{child.branch_name || 'Unassigned branch'}</p>
+                                {childrenExpanded && (
+                                    <div id={`parent-${parent.id}-children`} className="mt-4">
+                                        {parent.children.length === 0 ? (
+                                            <div className="rounded-lg border border-dashed border-gray-200 px-4 py-5 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                                                No students linked to this parent.
                                             </div>
-                                        ))}
+                                        ) : (
+                                            <div className="max-h-80 space-y-3 overflow-y-auto pr-1">
+                                                {parent.children.map((child) => (
+                                                    <div key={child.id} className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900/40">
+                                                        <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+                                                            <div>
+                                                                <div className="flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
+                                                                    <GraduationCap className="h-4 w-4 text-blue-600" />
+                                                                    {child.name}
+                                                                </div>
+                                                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{child.email}</p>
+                                                            </div>
+                                                            <div className="flex flex-wrap gap-2 text-xs">
+                                                                <span className="rounded-full bg-blue-50 px-2 py-1 font-medium text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
+                                                                    {child.class_name || 'Unassigned class'}
+                                                                </span>
+                                                                <span className="rounded-full bg-gray-100 px-2 py-1 font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                                                                    Roll {child.roll_number}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{child.branch_name || 'Unassigned branch'}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
                         </div>
-                    ))}
+                    )})}
 
                     {!isLoading && parents.length === 0 && (
                         <div className="col-span-full rounded-xl border-2 border-dashed border-gray-300 bg-white py-12 text-center dark:border-gray-700 dark:bg-gray-800">
