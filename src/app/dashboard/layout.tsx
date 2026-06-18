@@ -2,6 +2,8 @@
 
 import { useSidebar } from "@/context/SidebarContext";
 import AppHeader from "@/layout/AppHeader";
+import MobileDashboardHeader from "@/layout/MobileDashboardHeader";
+import MobileBottomBar from "@/layout/MobileBottomBar";
 import AppSidebar from "@/layout/AppSidebar";
 import Backdrop from "@/layout/Backdrop";
 import React from "react";
@@ -30,10 +32,14 @@ export default function AdminLayout({
         className={`flex-1 transition-all  duration-300 ease-in-out ${mainContentMargin}`}
       >
         {/* Header */}
-        <AppHeader />
+        <div className="hidden lg:block">
+          <AppHeader />
+        </div>
+        <MobileDashboardHeader />
         {/* Page Content */}
-        <div className="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">{children}</div>
+        <div className="p-4 pb-28 mx-auto max-w-(--breakpoint-2xl) md:p-6 lg:pb-6">{children}</div>
       </div>
+      <MobileBottomBar />
     </div>
   );
 }

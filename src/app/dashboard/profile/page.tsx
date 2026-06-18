@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import ProfileImageUpload from '@/components/dashboard/users/ProfileImageUpload';
 import { Modal } from '@/components/ui/modal';
@@ -9,7 +10,7 @@ import { useAuth } from '@/context/AuthContext';
 import { requestDashboardApi } from '@/lib/dashboardApi';
 import { getProfileImageSrc } from '@/lib/profileImage';
 import type { SystemUserRole } from '@/types/user-management';
-import { Calendar, Camera, Mail, MapPin, Pencil, Phone, Shield, UserRound } from 'lucide-react';
+import { Calendar, Camera, LogOut, Mail, MapPin, Pencil, Phone, Shield, UserRound } from 'lucide-react';
 
 interface ProfileRecord {
     id: string;
@@ -73,7 +74,8 @@ function DetailItem({
 }
 
 export default function ProfilePage() {
-    const { updateUser } = useAuth();
+    const router = useRouter();
+    const { logout, updateUser } = useAuth();
     const [profile, setProfile] = React.useState<ProfileRecord | null>(null);
     const [formData, setFormData] = React.useState<ProfileFormState>({
         name: '',
@@ -154,6 +156,11 @@ export default function ProfilePage() {
         } finally {
             setSaving(false);
         }
+    };
+
+    const handleLogout = () => {
+        logout();
+        router.push('/');
     };
 
     return (
@@ -259,6 +266,17 @@ export default function ProfilePage() {
                                         />
                                     </div>
                                 </section>
+                            </div>
+
+                            <div className="border-t border-gray-100 pt-6 dark:border-gray-800 lg:hidden">
+                                <button
+                                    type="button"
+                                    onClick={handleLogout}
+                                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-600 transition hover:bg-red-100 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-300 dark:hover:bg-red-900/30"
+                                >
+                                    <LogOut className="h-5 w-5" />
+                                    Logout
+                                </button>
                             </div>
                         </div>
                     </div>
